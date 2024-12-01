@@ -9,8 +9,8 @@ import { thumbnail } from "@cloudinary/url-gen/actions/resize";
 import { byRadius } from "@cloudinary/url-gen/actions/roundCorners";
 import { focusOn } from "@cloudinary/url-gen/qualifiers/gravity";
 import { FocusOn } from "@cloudinary/url-gen/qualifiers/focusOn";
-import { cld } from '../lib/cloudinary';
-import { supabase } from '../lib/supabase';
+import { cld } from '../../lib/cloudinary';
+import { supabase } from '../../lib/supabase';
 import { useRouter } from 'expo-router';
 
 const ProfileScreen = () => {
@@ -130,7 +130,7 @@ const ProfileScreen = () => {
       <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
           <TouchableOpacity onPress={pickBannerImage}>
-            <Image source={{ uri: bannerImage }} style={{ height: 200, objectFit: 'cover' }} />
+            <Image source={{ uri: bannerImage ??""}} style={{ height: 200, objectFit: 'cover' }} />
           </TouchableOpacity>
           <TouchableOpacity onPress={uploadBannerImage}>
             <Text>Upload Banner Image</Text>

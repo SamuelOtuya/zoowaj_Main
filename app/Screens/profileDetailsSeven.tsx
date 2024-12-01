@@ -15,7 +15,7 @@ const VerificationScreen = () => {
       </Text>
       <TouchableOpacity
         style={styles.nextButton}
-        onPress={() => router.push('(tabs)/home')}>
+        onPress={() => router.push('/(main)/tabs/home')}>
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity>
       <View style={styles.progressContainer}>

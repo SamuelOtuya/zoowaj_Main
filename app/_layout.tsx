@@ -1,32 +1,18 @@
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
-// import * as eva from '@eva-design/eva';
-import { Image, TouchableOpacity } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
-const backButton =  "../assets/images/backarrow";
-import {GestureHandlerRootView} from "react-native-gesture-handler"
-
-import { Customback } from './(tabs)/matches';
-import AuthProvider from './providers/AuthProvider';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Provider } from 'react-redux';
+import { persistor, store } from '@/redux/store';
+import { PersistGate } from 'redux-persist/integration/react';
+import { useAppSelector } from '@/redux/hooks/redux-hooks';
+import { View, Text } from 'react-native';
 import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
 
-// Custom back button component
-const CustomBackButton = () => {
-  const router = useRouter();
-  return (
-    <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
-      <Image src={backButton} style={{ height: 38, width: 38, objectFit: 'contain' }} />
-    </TouchableOpacity>
-  );
-};
-
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -41,82 +27,41 @@ export default function RootLayout() {
     return null;
   }
 
-  return (
-  <GestureHandlerRootView>
-      <AuthProvider>
+  const Stackscreens = () => {
+    const { login, details } = useAppSelector(state => state.auth);
+
+    return (
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name='signup' options={{ headerShown: false }} />
-        <Stack.Screen
-          name='profileDetailsone'
-          options={{
-            headerShadowVisible: false,
-            headerTitleAlign: 'center',
-            headerTitle: 'Profile Details',
-            headerLeft: () => <CustomBackButton />
-          }}
-        />
-        <Stack.Screen
-          name='profileDetailstwo'
-          options={{
-            headerShadowVisible: false,
-            headerTitleAlign: 'center',
-            headerTitle: 'Profile Details',
-            headerLeft: () => <CustomBackButton />
-          }}
-        />
-        <Stack.Screen
-          name='profilesScreenthree'
-          options={{
-            headerShadowVisible: false,
-            headerTitleAlign: 'center',
-            headerTitle: 'Profile Details',
-            headerLeft: () => <CustomBackButton />
-          }}
-        />
-        <Stack.Screen
-          name='profileDetailsfour'
-          options={{
-            headerShadowVisible: false,
-            headerTitleAlign: 'center',
-            headerTitle: 'Profile Details',
-            headerLeft: () => <CustomBackButton />
-          }}
-        />
-
-        <Stack.Screen
-          name='profileDetailsFive'
-          options={{
-            headerShadowVisible: false,
-            headerTitleAlign: 'center',
-            headerTitle: 'Profile Details',
-            headerLeft: () => <CustomBackButton />
-          }}
-        />
-
-        <Stack.Screen
-          name='profileDetailsSix'
-          options={{
-            headerShadowVisible: false,
-            headerTitleAlign: 'center',
-            headerTitle: 'Add your Photos',
-            headerLeft: () => <CustomBackButton />
-          }}
-        />
-        <Stack.Screen
-          name='profileDetailsSeven'
-          options={{
-            headerShadowVisible: false,
-            headerTitleAlign: 'center',
-            headerTitle: 'Verify who you are',
-            headerLeft: () => <CustomBackButton />
-          }}
-        />
-        <Stack.Screen name='notificationscreen' options={{ headerTitle: 'Notification', headerTitleAlign: 'center', headerLeft: () => <Customback /> }} />
-        <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-
+        {login && !details && (
+          <Stack.Screen name="(profile-details)" options={{ headerShown: false }} />
+        )}
+        {details && login && (
+          <Stack.Screen name="(main)" options={{ headerShown: false }} />
+        )}
+        {!login && !details && (
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        )}
       </Stack>
-    </AuthProvider>
-  </GestureHandlerRootView>
+    );
+  };
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Redux Provider */}
+      <Provider store={store}>
+        {/* PersistGate for rehydrating persisted state */}
+        <PersistGate
+          loading={
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Text>Loading...</Text>
+            </View>
+          }
+          persistor={persistor}
+        >
+          {/* App Screens */}
+          <Stackscreens />
+        </PersistGate>
+      </Provider>
+    </GestureHandlerRootView>
   );
 }

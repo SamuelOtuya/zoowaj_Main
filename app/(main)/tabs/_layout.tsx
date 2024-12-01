@@ -3,14 +3,14 @@ import { Redirect, Tabs, useRouter } from 'expo-router';
 import { Image, TouchableOpacity, View } from 'react-native';
 
 // Import PNG images
-import marriageIcon from '../../assets/images/homeicon.png';
-import matchesIcon from '../../assets/images/matches.png';
-import messageIcon from '../../assets/images/message.png';
-import profileIcon from '../../assets/images/profile.png';
+import marriageIcon from '../../../assets/images/homeicon.png'
+import matchesIcon from '../../../assets/images/matches.png';
+import messageIcon from '../../../assets/images/message.png';
+import profileIcon from '../../../assets/images/profile.png';
 
-import notificationIcon from "../../assets/images/notificationicon.png";
-import filterIcon from "../../assets/images/filtericon.png";
-import { useAuth } from '../providers/AuthProvider';
+import notificationIcon from "../../../assets/images/notificationicon.png";
+import filterIcon from "../../../assets/images/filtericon.png";
+// import { useAuth } from '../../providers/AuthProvider';
 
 const _layout = () => {
   const router = useRouter();
@@ -45,7 +45,7 @@ const _layout = () => {
           ),
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity onPress={() => router.push('notificationscreen')}>
+              <TouchableOpacity onPress={() => router.push('/(Screens)/notificationscreen')}>
                 <Image source={notificationIcon} style={{ width: 38, height: 38, marginRight: 10 }} />
               </TouchableOpacity>
               <TouchableOpacity>

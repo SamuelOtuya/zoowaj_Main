@@ -1,9 +1,10 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View, SafeAreaView, FlatList } from 'react-native'
 import React from 'react'
 import { Stack, useRouter } from 'expo-router'
-import backgreenarrow from "../../assets/images/backgreenarrow.png"
-import filterGreen from "../../assets/images/filtergreen.png"
+import backgreenarrow from "../../../assets/images/backgreenarrow.png"
+import filterGreen from "../../../assets/images/filtergreen.png"
 import { Ionicons } from '@expo/vector-icons'
+// import backgreenarrow from "../../../assets/images/backgreenarrow.png"
 
 export const Customback = () => {
   const router = useRouter()
