@@ -1,6 +1,19 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import API from "@/api/api";
 
+// Update Profile Details Service
+export const updateProfileDetailsService = createAsyncThunk(
+  "auth/user/updateProfileDetails",
+  async (data: { details: any }, thunkAPI) => {
+    try {
+      const res = await API.put("user/update-profile", data);
+      return res.data; // Backend should return updated user and detailsComplete status
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(error.response?.data || "Update failed");
+    }
+  }
+);
+
 export const saveProfileDetailsService = createAsyncThunk(
   "profile/saveProfile",
   async (profileData: Record<string, any>, thunkAPI) => {

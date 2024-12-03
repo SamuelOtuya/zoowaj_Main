@@ -1,4 +1,5 @@
 import API from "@/api/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 // Register User Service
@@ -9,7 +10,9 @@ export const registerUserService = createAsyncThunk(
       const res = await API.post("user/register", data);
       return res.data; // Ensure the backend returns `user` and `token`
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data || "Registration failed");
+      return thunkAPI.rejectWithValue(
+        error.response?.data || "Registration failed"
+      );
     }
   }
 );
@@ -23,19 +26,6 @@ export const loginUserService = createAsyncThunk(
       return res.data; // Ensure backend returns `user` and `token`
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.response?.data || "Login failed");
-    }
-  }
-);
-
-// Update Profile Details Service
-export const updateProfileDetailsService = createAsyncThunk(
-  "auth/user/updateProfileDetails",
-  async (data: { details: any }, thunkAPI) => {
-    try {
-      const res = await API.put("user/update-profile", data);
-      return res.data; // Backend should return updated user and detailsComplete status
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data || "Update failed");
     }
   }
 );

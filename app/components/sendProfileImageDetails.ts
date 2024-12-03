@@ -1,25 +1,36 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default async function sendProfileData(
+export default async function sendProfileImageData(
   endpoint: string,
   profileData: Record<string, any>
 ): Promise<any> {
   try {
     const formData = new FormData();
 
-    // Add other profile data to FormData
-    for (const key in profileData) {
-      if (key !== "profilePhoto" && key !== "coverPhotos") {
-        formData.append(key, profileData[key]);
-      }
+    // Add profile photo to FormData
+    if (profileData.profilePhoto) {
+      const profilePhoto: any = {
+        uri: profileData.profilePhoto,
+        name: "profile_photo.jpg",
+        type: "image/jpeg",
+      };
+      formData.append("profilePhoto", profilePhoto);
+    }
+
+    // Add cover photos to FormData
+    if (profileData.coverPhotos?.length) {
+      profileData.coverPhotos.forEach((photoUri: string, index: number) => {
+        const coverPhoto: any = {
+          uri: photoUri,
+          name: `cover_photo_${index + 1}.jpg`,
+          type: "image/jpeg",
+        };
+        formData.append("coverPhotos", coverPhoto);
+      });
     }
 
     // Retrieve the bearer token from Async Storage
     const token = await AsyncStorage.getItem("bearerToken");
-    console.log(`Token ${token}`);
-
-    // Log FormData contents for debugging
-    console.log(`Form Data: ${JSON.stringify(formData, null, 2)}`);
 
     // Send request to the backend
     const response = await fetch(endpoint, {
@@ -28,7 +39,7 @@ export default async function sendProfileData(
       headers: {
         Accept: "application/json",
         "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token}`, 
       },
     });
 

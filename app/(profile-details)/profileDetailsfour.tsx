@@ -17,7 +17,7 @@ export default function Screen4() {
   const [livingArrangements, setLivingArrangements] = useState('');
   const [iceBreaker, setIceBreaker] = useState('');
 
-  const profileData = useSelector((state: any) => state.profile.data);
+  const profileData = useSelector(async (state: any) => await state.profile.data);
   // console.log(`Profile Data 4: ${JSON.stringify(profileData, null, 2)}`)
 
   const handleSubmit = () => {
