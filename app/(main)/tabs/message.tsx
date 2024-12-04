@@ -3,7 +3,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import backgreenarrow from "../../../assets/images/backgreenarrow.png";
 import API from '@/api/api';
 
 // Define types for better type safety
@@ -22,12 +21,13 @@ interface ConversationItemProps {
 
 const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
   const router = useRouter();
+  const defaultAvatarPath = require('../../../assets/images/profile.png')
 
   return (
     <TouchableOpacity
       style={styles.conversationItem}
       onPress={() => router.push({
-        pathname: '/(main)/chat/[id]',
+        pathname: '/(main)/chat/id',
         params: { id: item.id }
       })}
     >
@@ -35,7 +35,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
         <Image 
           source={{ uri: item.profilePicture }} 
           style={styles.avatar}
-          defaultSource={require('../../../assets/images/default-avatar.png')}
+          defaultSource={defaultAvatarPath}
         />
       ) : (
         <View style={styles.avatar} />
@@ -70,6 +70,7 @@ const MessageTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const backgreenarrowPath = require('../../../assets/images/backgreenarrow.png')
 
   // Fetch users from API
   const fetchUsers = useCallback(async () => {
@@ -132,7 +133,7 @@ const MessageTab = () => {
         options={{
           headerLeft: () => (
             <TouchableOpacity style={{ marginLeft: 10 }}>
-              <Image source={backgreenarrow} style={{ height: 30, width: 30 }} />
+              <Image source={backgreenarrowPath} style={{ height: 30, width: 30 }} />
             </TouchableOpacity>
           ),
           headerTitleAlign: 'center',

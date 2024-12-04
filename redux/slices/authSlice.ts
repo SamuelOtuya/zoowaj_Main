@@ -1,91 +1,85 @@
 import { createSlice } from "@reduxjs/toolkit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginUserService, registerUserService, updateProfileDetailsService } from "../services/authservice";
+import { loginUserService, registerUserService } from "../services/authService";
+import { setAuthToken } from "@/api/api";
 
-const initialState = {
-  isloading: false,
-  login: false,
-  details: false,
-  user: {},
+interface authState {
+  user: Record<string, any> | null;
+  token: string | null;
+  details: Record<string, any> | null;
+  error: string | null;
+  isLoading: boolean;
+  login: boolean;
+}
+
+const initialState: authState = {
+  user: null,
   token: null,
-  error: "",
+  details: null,
+  isLoading: false,
+  login: false,
+  error: null,
 };
 
-const authslice = createSlice({
+const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     hydrateAuthState: (state, action) => {
       const { token, user, details } = action.payload;
       state.token = token;
-      state.user = user;
+      state.user = user || null;
       state.details = details;
       state.login = !!token;
     },
     logout: (state) => {
       state.token = null;
-      state.user = {};
-      state.details = false;
+      state.user = null;
       state.login = false;
+      state.details = null;
     },
-    
   },
   extraReducers: (builder) => {
     // Register User
     builder
       .addCase(registerUserService.pending, (state) => {
-        state.isloading = true;
+        state.isLoading = true;
         state.error = "";
       })
       .addCase(registerUserService.fulfilled, (state, action) => {
-        state.isloading = false;
+        state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.login = true;
-        AsyncStorage.setItem("userToken", action.payload.token);
+        setAuthToken(action.payload.token);
+        AsyncStorage.setItem("bearerToken", action.payload.token);
         AsyncStorage.setItem("userData", JSON.stringify(action.payload.user));
       })
       .addCase(registerUserService.rejected, (state, action: any) => {
-        state.isloading = false;
+        state.isLoading = false;
         state.error = action.payload || "Registration failed";
       })
 
       // Login User
       .addCase(loginUserService.pending, (state) => {
-        state.isloading = true;
+        state.isLoading = true;
         state.error = "";
       })
       .addCase(loginUserService.fulfilled, (state, action) => {
-        state.isloading = false;
+        state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.login = true;
-        AsyncStorage.setItem("userToken", action.payload.token);
+        setAuthToken(action.payload.token);
+        AsyncStorage.setItem("bearerToken", action.payload.token);
         AsyncStorage.setItem("userData", JSON.stringify(action.payload.user));
       })
       .addCase(loginUserService.rejected, (state, action: any) => {
-        state.isloading = false;
+        state.isLoading = false;
         state.error = action.payload || "Login failed";
-      })
-
-      // Update Profile Details
-      .addCase(updateProfileDetailsService.pending, (state) => {
-        state.isloading = true;
-        state.error = "";
-      })
-      .addCase(updateProfileDetailsService.fulfilled, (state, action) => {
-        state.isloading = false;
-        state.user = { ...state.user, ...action.payload.user };
-        state.details = action.payload.detailsComplete;
-        AsyncStorage.setItem("userData", JSON.stringify(state.user));
-        AsyncStorage.setItem("details", JSON.stringify(state.details));
-      })
-      .addCase(updateProfileDetailsService.rejected, (state, action: any) => {
-        state.isloading = false;
-        state.error = action.payload || "Profile update failed";
       });
   },
 });
 
-export const { hydrateAuthState, logout } = authslice.actions;
-export default authslice.reducer;
+export const { hydrateAuthState, logout } = authSlice.actions;
+export default authSlice.reducer;
