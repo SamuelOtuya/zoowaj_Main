@@ -7,16 +7,17 @@ import {
   TouchableOpacity,
   Text,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
 import { loginUserService } from "@/redux/services/authService";
 import { useRouter } from "expo-router";
-import Button from "../components/Button";
+import Button from "../../components/Button";
 import { Redirect } from "expo-router"; // Import Redirect
 
 export default function Auth() {
   const dispatch = useAppDispatch();
-  const { isloading, error, login, details } = useAppSelector(
+  const { isLoading, error, login, details } = useAppSelector(
     (state) => state.auth
   );
   const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ export default function Auth() {
 
   // Redirect user based on login and details state
   if (login && !details) {
-    return <Redirect href="/(profile-details)/profileDetailsone" />;
+    return <Redirect href="/(profile-details)/step-1" />;
   } else if (login && details) {
     return <Redirect href="/(main)" />;
   }
@@ -96,12 +97,13 @@ export default function Auth() {
           autoCapitalize="none"
           style={styles.input}
         />
-        <Button
-          title={isloading ? "Processing..." : "Sign In"}
-          onPress={signInWithEmail}
-        />
+        {isLoading ? (
+          <ActivityIndicator />
+        ) : (
+          <Button title={"Sign In"} onPress={signInWithEmail} />
+        )}
         <TouchableOpacity
-          onPress={() => router.push("/(auth)/emailPasswordsignUp")}
+          onPress={() => router.push("/SignUp")}
           style={styles.touchableOpacity}
         >
           <Text style={styles.touchableText}>

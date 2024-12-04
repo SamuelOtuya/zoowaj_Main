@@ -8,23 +8,19 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
-import { updateProfileField } from "../../redux/slices/profileSlice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import ImagePickerService from "@/app/components/imagePicker";
-import { saveProfileDetailsService } from "@/redux/services/profileservice";
-import sendProfileData from "../components/sendProfileDetails";
-import sendProfileImageData from "../components/sendProfileImageDetails";
+import ImagePickerService from "@/components/imagePicker";
+import {
+  createProfileDetailsService,
+  createProfileImagesService,
+} from "@/redux/services/profileService";
+import setupProfileImageData from "@/components/sendProfileImageDetails";
 
 interface ProfileData {
   profilePhoto: string | null;
   coverPhotos: string[];
-  [key: string]: any; // For other profile fields
-}
-
-interface ApiResponse {
-  profile: object;
-  msg: string;
+  [key: string]: any;
 }
 
 const ProfileImagePicker: React.FC = () => {
@@ -33,8 +29,8 @@ const ProfileImagePicker: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const profileData = useSelector((state: any) => state.profile.data);
-  const dispatch = useDispatch();
+  const profileData = useAppSelector((state: any) => state.profile.data);
+  const dispatch = useAppDispatch();
 
   const pickImage = async (type: "profile" | "cover") => {
     try {
@@ -42,7 +38,6 @@ const ProfileImagePicker: React.FC = () => {
         const uri = await ImagePickerService.pickSingleImage();
         if (uri) {
           setProfilePhoto(uri);
-          // dispatch(updateProfileField({ key: 'profilePhoto', value: uri }));
         }
       } else {
         if (coverPhotos.length >= 6) {
@@ -54,7 +49,6 @@ const ProfileImagePicker: React.FC = () => {
         if (uris.length > 0) {
           const updatedCoverPhotos = [...coverPhotos, ...uris];
           setCoverPhotos(updatedCoverPhotos);
-          // dispatch(updateProfileField({ key: 'coverPhotos', value: updatedCoverPhotos }));
         }
       }
     } catch (err) {
@@ -85,29 +79,39 @@ const ProfileImagePicker: React.FC = () => {
         coverPhotos,
       };
 
+      // Validate data before dispatching
       if (!validateData(updatedProfileData)) {
         return;
       }
 
-      // Log FormData contents for debugging
-      console.log(
-        `Final Profile Data: ${JSON.stringify(profileData, null, 2)}`
-      );
-      const DetailsURI =
-        "https://capital-obviously-terrier.ngrok-free.app/api/v1/user/profile";
-      const ImagesURI =
-        "https://capital-obviously-terrier.ngrok-free.app/api/v1/user/profile-images";
+      // Dispatch the action to create/update the profile details
+      const profileDetailsPayload = {
+        ...profileData, // Use updated profile data for API
+      };
 
-      const detailsResponse: ApiResponse = await sendProfileData(
-        DetailsURI,
-        profileData
-      );
-      const imagesResponse: ApiResponse = await sendProfileImageData(
-        ImagesURI,
-        updatedProfileData
+      // Wait for the first dispatch to complete
+      const profileDetailsResponse = await dispatch(
+        createProfileDetailsService(profileDetailsPayload)
       );
 
-      alert("Profile updated successfully!");
+      // Check if the first dispatch was successful
+      if (profileDetailsResponse.meta.requestStatus === "fulfilled") {
+        // Prepare image data only if profile details were successfully updated
+        const profileImagesPayload = await setupProfileImageData({
+          profilePhoto,
+          coverPhotos,
+        });
+
+        // Dispatch the action to upload profile images
+        const profileImagesResponse = await dispatch(
+          createProfileImagesService(profileImagesPayload)
+        );
+        if (profileImagesResponse.meta.requestStatus === "fulfilled")
+          alert("Profile updated successfully!");
+      } else {
+        // Handle error from the first dispatch
+        setError("Failed to update profile details.");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
@@ -262,4 +266,5 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
+
 export default ProfileImagePicker;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -7,13 +7,13 @@ import {
   ActivityIndicator,
   Text,
   RefreshControl,
-} from 'react-native';
-import { useNavigation } from 'expo-router';
-import ProfileCard from '../../components/ProfileCard';
-import API from '@/api/api';
-import reject from '../../../assets/images/reject.png';
-import match from '../../../assets/images/match.png';
-import stared from '../../../assets/images/stared.png';
+} from "react-native";
+import { useNavigation } from "expo-router";
+import ProfileCard from "../../../components/ProfileCard";
+import API from "@/api/api";
+import reject from "../../../assets/images/reject.png";
+import match from "../../../assets/images/match.png";
+import stared from "../../../assets/images/stared.png";
 
 interface Profile {
   id: string;
@@ -37,28 +37,30 @@ const HomeScreen = () => {
   const fetchProfiles = async () => {
     try {
       setError(null);
-      const response = await API.get('/users/profiles');
+      const response = await API.get("/users/profiles");
 
-      const transformedProfiles: Profile[] = response.data.map((profile: any) => ({
-        id: profile.id,
-        image: profile.profile_photo,
-        name: profile.name,
-        address: `${profile.city}, ${profile.country}`,
-        tags: [
-          profile.marital_status,
-          profile.has_children ? 'Has Children' : 'No Children',
-          profile.country,
-        ],
-        age: profile.age,
-        bio: profile.bio,
-        isLiked: profile.is_liked,
-        isFavorite: profile.is_favorite,
-      }));
+      const transformedProfiles: Profile[] = response.data.map(
+        (profile: any) => ({
+          id: profile.id,
+          image: profile.profile_photo,
+          name: profile.name,
+          address: `${profile.city}, ${profile.country}`,
+          tags: [
+            profile.marital_status,
+            profile.has_children ? "Has Children" : "No Children",
+            profile.country,
+          ],
+          age: profile.age,
+          bio: profile.bio,
+          isLiked: profile.is_liked,
+          isFavorite: profile.is_favorite,
+        })
+      );
 
       setProfiles(transformedProfiles);
     } catch (err) {
-      setError('Failed to load profiles. Please try again.');
-      console.error('Error fetching profiles:', err);
+      setError("Failed to load profiles. Please try again.");
+      console.error("Error fetching profiles:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -84,8 +86,8 @@ const HomeScreen = () => {
         )
       );
     } catch (err) {
-      console.error('Error liking profile:', err);
-      alert('Failed to like profile. Please try again.');
+      console.error("Error liking profile:", err);
+      alert("Failed to like profile. Please try again.");
     }
   };
 
@@ -95,12 +97,14 @@ const HomeScreen = () => {
 
       setProfiles((prevProfiles) =>
         prevProfiles.map((profile) =>
-          profile.id === profileId ? { ...profile, isFavorite: !profile.isFavorite } : profile
+          profile.id === profileId
+            ? { ...profile, isFavorite: !profile.isFavorite }
+            : profile
         )
       );
     } catch (err) {
-      console.error('Error toggling favorite:', err);
-      alert('Failed to update favorite status. Please try again.');
+      console.error("Error toggling favorite:", err);
+      alert("Failed to update favorite status. Please try again.");
     }
   };
 
@@ -112,8 +116,8 @@ const HomeScreen = () => {
         prevProfiles.filter((profile) => profile.id !== profileId)
       );
     } catch (err) {
-      console.error('Error rejecting profile:', err);
-      alert('Failed to reject profile. Please try again.');
+      console.error("Error rejecting profile:", err);
+      alert("Failed to reject profile. Please try again.");
     }
   };
 
@@ -155,7 +159,11 @@ const HomeScreen = () => {
       )}
       contentContainerStyle={styles.contentContainer}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#20B2AA']} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          colors={["#20B2AA"]}
+        />
       }
       ListEmptyComponent={
         <View style={styles.emptyContainer}>
@@ -173,32 +181,32 @@ const styles = StyleSheet.create({
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
-    color: 'red',
+    color: "red",
     marginBottom: 15,
-    textAlign: 'center',
+    textAlign: "center",
   },
   retryButton: {
-    backgroundColor: '#20B2AA',
+    backgroundColor: "#20B2AA",
     padding: 10,
     borderRadius: 5,
   },
   retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 50,
   },
   emptyText: {
-    color: '#666',
+    color: "#666",
     fontSize: 16,
   },
 });

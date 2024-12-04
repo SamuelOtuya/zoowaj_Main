@@ -1,43 +1,77 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { useAppDispatch } from '@/redux/hooks/redux-hooks';
-import { useRouter } from 'expo-router';
-import { updateProfileField } from '@/redux/slices/profileSlice';
-import { useSelector } from 'react-redux';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+} from "react-native";
+import { useAppDispatch } from "@/redux/hooks/redux-hooks";
+import { useRouter } from "expo-router";
+import { updateProfileField } from "@/redux/slices/profileSlice";
+import { useSelector } from "react-redux";
 
 const MAX_INTERESTS = 5;
 
 const interests = [
-  'Photography', 'Shopping', 'Karaoke', 'Yoga', 'Cooking',
-  'Tennis', 'Running', 'Swimming', 'Art', 'Travelling',
-  'Extreme Sports', 'Music', 'Drinking', 'Video Games',
+  "Photography",
+  "Shopping",
+  "Karaoke",
+  "Yoga",
+  "Cooking",
+  "Tennis",
+  "Running",
+  "Swimming",
+  "Art",
+  "Traveling",
+  "Extreme Sports",
+  "Music",
+  "Drinking",
+  "Video Games",
 ];
 
 export default function Screen2() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+
+  // State to manage selected interests
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
+  // Access profile data from Redux store
   const profileData = useSelector((state: any) => state.profile.data);
-  // console.log(`Profile Data 2: ${JSON.stringify(profileData, null, 2)}`)
 
+  // Function to handle interest selection
   const handleInterestChange = (interest: string) => {
     setSelectedInterests((prev) => {
       if (prev.includes(interest)) {
+        // Remove interest if already selected
         return prev.filter((item) => item !== interest);
       } else if (prev.length < MAX_INTERESTS) {
+        // Add interest if not already selected and within limit
         return [...prev, interest];
       }
-      return prev;
+      return prev; // Return previous state if limit reached
     });
   };
 
+  // Function to handle form submission
   const handleSubmit = () => {
-    dispatch(updateProfileField({ key: 'interests', value: selectedInterests }));
-    console.log(`Profile Data 2: ${JSON.stringify(profileData, null, 2)}`)
-    router.push('/(profile-details)/profileDetailsthree');
+    // Dispatch selected interests to Redux store
+    dispatch(
+      updateProfileField({ key: "interests", value: selectedInterests })
+    );
+
+    // Log profile data for debugging
+    console.log(
+      `Profile Data before navigation: ${JSON.stringify(profileData, null, 2)}`
+    );
+
+    // Navigate to the next step
+    router.push("/(profile-details)/step-3");
   };
 
+  // Render individual interest items
   const renderItem = ({ item }: { item: string }) => (
     <TouchableOpacity
       style={[
@@ -63,24 +97,24 @@ export default function Screen2() {
         numColumns={2}
         contentContainerStyle={styles.listContainer}
       />
-      <Button 
-        title="Next" 
-        onPress={handleSubmit} 
-        disabled={selectedInterests.length === 0}
+      <Button
+        title="Next"
+        onPress={handleSubmit}
+        disabled={selectedInterests.length === 0} // Disable button if no interests are selected
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 10,
   },
   counter: {
@@ -94,16 +128,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
     margin: 5,
-    backgroundColor: 'lightgray',
+    backgroundColor: "lightgray",
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   selectedButton: {
-    backgroundColor: '#4CAF50', // Green when selected
+    backgroundColor: "#4CAF50", // Green when selected
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
 });

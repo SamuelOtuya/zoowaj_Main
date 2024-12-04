@@ -1,12 +1,12 @@
-import React from 'react';
-import { Redirect, Tabs, useRouter } from 'expo-router';
-import { Image, TouchableOpacity, View } from 'react-native';
+import React from "react";
+import { Redirect, Tabs, useRouter } from "expo-router";
+import { Image, TouchableOpacity, View } from "react-native";
 
 // Import PNG images
-import marriageIcon from '../../../assets/images/homeicon.png'
-import matchesIcon from '../../../assets/images/matches.png';
-import messageIcon from '../../../assets/images/message.png';
-import profileIcon from '../../../assets/images/profile.png';
+import marriageIcon from "../../../assets/images/homeicon.png";
+import matchesIcon from "../../../assets/images/matches.png";
+import messageIcon from "../../../assets/images/message.png";
+import profileIcon from "../../../assets/images/profile.png";
 
 import notificationIcon from "../../../assets/images/notificationicon.png";
 import filterIcon from "../../../assets/images/filtericon.png";
@@ -23,14 +23,15 @@ const _layout = () => {
           paddingBottom: 10, // Add padding at the bottom
           paddingTop: 10, // Add padding at the top
         },
-        tabBarActiveTintColor: '#43CEBA', // Color for active tab
-        tabBarInactiveTintColor: 'black', // Color for inactive tab
+        tabBarActiveTintColor: "#43CEBA", // Color for active tab
+        tabBarInactiveTintColor: "black", // Color for inactive tab
+        headerShown: false,
       }}
     >
       <Tabs.Screen
-        name='home'
+        name="home"
         options={{
-          headerTitle: 'Discover',
+          headerTitle: "Discover",
           headerShadowVisible: false,
           tabBarIcon: ({ color, focused }) => (
             <Image
@@ -38,25 +39,33 @@ const _layout = () => {
               style={{
                 width: 24,
                 height: 24,
-                objectFit: 'contain',
-                tintColor: focused ? '#43CEBA' : 'black'
+                objectFit: "contain",
+                tintColor: focused ? "#43CEBA" : "black",
               }}
             />
           ),
           headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity onPress={() => router.push('/(Screens)/notificationscreen')}>
-                <Image source={notificationIcon} style={{ width: 38, height: 38, marginRight: 10 }} />
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <TouchableOpacity
+                onPress={() => router.push("/(Screens)/notificationscreen")}
+              >
+                <Image
+                  source={notificationIcon}
+                  style={{ width: 38, height: 38, marginRight: 10 }}
+                />
               </TouchableOpacity>
               <TouchableOpacity>
-                <Image source={filterIcon} style={{ width: 38, height: 38, marginRight: 15 }} />
+                <Image
+                  source={filterIcon}
+                  style={{ width: 38, height: 38, marginRight: 15 }}
+                />
               </TouchableOpacity>
             </View>
           ),
         }}
       />
       <Tabs.Screen
-        name='matches'
+        name="matches"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Image
@@ -64,14 +73,14 @@ const _layout = () => {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? '#43CEBA' : 'black'
+                tintColor: focused ? "#43CEBA" : "black",
               }}
             />
           ),
         }}
       />
       <Tabs.Screen
-        name='message'
+        name="message"
         options={{
           tabBarIcon: ({ color, focused }) => (
             <Image
@@ -79,14 +88,14 @@ const _layout = () => {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? '#43CEBA' : 'black'
+                tintColor: focused ? "#43CEBA" : "black",
               }}
             />
           ),
         }}
       />
       <Tabs.Screen
-        name='profile'
+        name="profile"
         options={{
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
@@ -95,13 +104,16 @@ const _layout = () => {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? '#43CEBA' : 'black'
+                tintColor: focused ? "#43CEBA" : "black",
               }}
             />
           ),
         }}
       />
-      <Tabs.Screen name='profiledetail/[id]' options={{ href: null, headerShown: false }} />
+      <Tabs.Screen
+        name="profiledetail/[id]"
+        options={{ href: null, headerShown: false }}
+      />
       {/* <Tabs.Screen name='profile/[id]' options={{ href: null, headerShown: false }} /> */}
       {/* <Tabs.Screen name='[profile]/page' options={{ href: null, headerShown: false }} /> */}
     </Tabs>

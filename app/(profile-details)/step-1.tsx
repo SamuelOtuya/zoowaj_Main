@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { useAppDispatch } from "@/redux/hooks/redux-hooks";
 import { useRouter } from "expo-router";
-import { saveProfileDetailsService } from "../../redux/services/profileservice"; // Assume the service is defined
 import { updateProfileField } from "@/redux/slices/profileSlice";
 import { useSelector } from "react-redux";
 
@@ -28,13 +27,13 @@ export default function Screen1() {
       phone_number: phoneNumber,
       birthDate,
       height,
-      maritalStatus,
+      maritalStatus: maritalStatus.trim(),
       tagline,
     };
     dispatch(updateProfileField({ key: "about", value: profileData }));
     console.log(`Profile Data 1: ${JSON.stringify(profileData2, null, 2)}`);
     console.log(`Profile Data 1: ${JSON.stringify(profileData, null, 2)}`);
-    router.push("/(profile-details)/profileDetailstwo");
+    router.push("/(profile-details)/step-2");
   };
 
   return (

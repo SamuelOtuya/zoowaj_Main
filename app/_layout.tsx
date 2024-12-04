@@ -10,6 +10,7 @@ import { useAppSelector } from "@/redux/hooks/redux-hooks";
 import { View, Text } from "react-native";
 import "../global.css";
 
+// Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -18,11 +19,16 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    const hideSplashScreen = async () => {
+      if (loaded) {
+        await SplashScreen.hideAsync();
+      }
+    };
+
+    hideSplashScreen();
   }, [loaded]);
 
+  // If fonts are not loaded yet, return null to avoid rendering the app
   if (!loaded) {
     return null;
   }
@@ -31,19 +37,10 @@ export default function RootLayout() {
     const { login, details } = useAppSelector((state) => state.auth);
 
     return (
-      <Stack>
-        {login && !details && (
-          <Stack.Screen
-            name="(profile-details)"
-            options={{ headerShown: false }}
-          />
-        )}
-        {details && login && (
-          <Stack.Screen name="(main)" options={{ headerShown: false }} />
-        )}
-        {!login && !details && (
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        )}
+      <Stack screenOptions={{ headerShown: false }}>
+        {login && !details && <Stack.Screen name="(profile-details)" />}
+        {details && login && <Stack.Screen name="(main)" />}
+        {!login && !details && <Stack.Screen name="(auth)" />}
       </Stack>
     );
   };

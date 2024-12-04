@@ -60,7 +60,7 @@ export default function Screen5() {
       })
     );
     console.log(`Profile Data 5: ${JSON.stringify(profileData, null, 2)}`);
-    router.push("/(profile-details)/profileDetailsSix");
+    router.push("/(profile-details)/step-6");
   };
 
   return (

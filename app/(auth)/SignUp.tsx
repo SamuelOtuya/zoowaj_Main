@@ -7,20 +7,27 @@ import {
   TouchableOpacity,
   Text,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
 import { registerUserService } from "@/redux/services/authService";
-import { useRouter } from "expo-router";
-import Button from "../components/Button";
+import { Redirect, useRouter } from "expo-router";
+import Button from "../../components/Button";
 
 export default function Auth() {
-  const dispatch = useAppDispatch();
-  const { isloading, error, login, details } = useAppSelector(
-    (state) => state.auth
-  ); // Type should be inferred now
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { isLoading, error, login, details } = useAppSelector(
+    (state) => state.auth
+  );
+
+  if (login && !details) {
+    return <Redirect href={"/(profile-details)/step-1"} />;
+  } else if (login && details) {
+    return <Redirect href={"/(main)"} />;
+  }
 
   async function signUpWithEmail() {
     if (!email || !password) {
@@ -46,28 +53,22 @@ export default function Auth() {
     }
 
     const userData = { email, password };
-    await dispatch(registerUserService(userData));
-
-    // Check the Redux state after signup
-    const { login, details, error } = useAppSelector((state) => state.auth);
+    const userSignUp = await dispatch(registerUserService(userData));
+    if (userSignUp.meta.requestStatus === "fulfilled") {
+      return <Redirect href={"/(profile-details)/step-1"} />;
+    }
 
     if (error) {
       Alert.alert("Error", error);
       console.log(error, "=============");
       return;
     }
-
-    if (login && !details) {
-      router.push("/(profile-details)/profileDetailsone");
-    } else if (login && details) {
-      router.push("/(main)");
-    }
   }
 
   return (
     <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollview}
+        contentContainerStyle={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         <TextInput
@@ -85,12 +86,13 @@ export default function Auth() {
           autoCapitalize="none"
           style={styles.input}
         />
-        <Button
-          title={isloading ? "Processing..." : "Sign Up"}
-          onPress={signUpWithEmail}
-        />
+        {isLoading ? (
+          <ActivityIndicator />
+        ) : (
+          <Button title={"Sign Up"} onPress={signUpWithEmail} />
+        )}
         <TouchableOpacity
-          onPress={() => router.push("/(auth)/Login")}
+          onPress={() => router.push("/SignIn")}
           style={styles.touchableOpacity}
         >
           <Text style={styles.touchableText}>
@@ -110,7 +112,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 50,
   },
-  scrollview: {
+  scrollView: {
     paddingBottom: 30,
     backgroundColor: "#D9D9D9",
     padding: 10,
