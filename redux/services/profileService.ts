@@ -32,14 +32,12 @@ export const createProfileDetailsService = createAsyncThunk(
 
 export const createProfileImagesService = createAsyncThunk(
   "profile/saveProfileImages",
-  async (profileData: any, thunkAPI) => {
+  async (formData: FormData, thunkAPI) => {
     try {
-      const response = await API.post("user/profile-images", {
+      const response = await API.post("user/profile-images", formData, {
         headers: {
-          Accept: "*", //"application/json",
-          "Content-Type": "multipart/form-data",
+          Accept: "*/*",
         },
-        body: profileData,
       });
       console.log("API Response:", response.data); // Debug response structure
       return response.data; //`success` property

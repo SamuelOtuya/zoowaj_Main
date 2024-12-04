@@ -81,6 +81,7 @@ const ProfileImagePicker: React.FC = () => {
 
       // Validate data before dispatching
       if (!validateData(updatedProfileData)) {
+        setError("Please provide valid profile data.");
         return;
       }
 
@@ -89,28 +90,35 @@ const ProfileImagePicker: React.FC = () => {
         ...profileData, // Use updated profile data for API
       };
 
-      // Wait for the first dispatch to complete
       const profileDetailsResponse = await dispatch(
         createProfileDetailsService(profileDetailsPayload)
       );
 
-      // Check if the first dispatch was successful
       if (profileDetailsResponse.meta.requestStatus === "fulfilled") {
-        // Prepare image data only if profile details were successfully updated
-        const profileImagesPayload = await setupProfileImageData({
+        // Prepare and upload profile images
+        const profileImagesPayload: FormData = await setupProfileImageData({
           profilePhoto,
           coverPhotos,
         });
 
-        // Dispatch the action to upload profile images
         const profileImagesResponse = await dispatch(
           createProfileImagesService(profileImagesPayload)
         );
-        if (profileImagesResponse.meta.requestStatus === "fulfilled")
+
+        if (profileImagesResponse.meta.requestStatus === "fulfilled") {
           alert("Profile updated successfully!");
+        } else {
+          setError(
+            profileImagesResponse.payload?.message ||
+              "Profile details were updated, but uploading images failed."
+          );
+        }
       } else {
         // Handle error from the first dispatch
-        setError("Failed to update profile details.");
+        setError(
+          profileDetailsResponse.payload?.message ||
+            "Failed to update profile details."
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");
