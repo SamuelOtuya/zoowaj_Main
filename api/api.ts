@@ -15,4 +15,20 @@ export const setAuthToken = (token: string) => {
   }
 };
 
+API.interceptors.request.use((config) => {
+  console.log("Outgoing Request:", config);
+  return config;
+});
+
+API.interceptors.response.use(
+  (response) => {
+    console.log("Response:", response);
+    return response;
+  },
+  (error) => {
+    console.error("Error Response:", error.response || error.message);
+    return Promise.reject(error);
+  }
+);
+
 export default API;

@@ -34,13 +34,17 @@ export const createProfileImagesService = createAsyncThunk(
   "profile/saveProfileImages",
   async (formData: FormData, thunkAPI) => {
     try {
+      console.log(
+        "Uploading Profile Images Payload:",
+        Array.from(formData.entries())
+      );
       const response = await API.post("user/profile-images", formData, {
         headers: {
-          Accept: "*/*",
+          Accept: "application/json", // Explicitly set header
         },
       });
       console.log("API Response:", response.data); // Debug response structure
-      return response.data; //`success` property
+      return response.data; // Return `success` property
     } catch (error: any) {
       console.error("API Error:", error.response?.data || error.message); // Debug errors
       return thunkAPI.rejectWithValue(

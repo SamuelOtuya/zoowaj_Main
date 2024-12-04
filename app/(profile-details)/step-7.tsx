@@ -3,69 +3,33 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
+  TextInput,
+  ScrollView,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
-import Icon from "react-native-vector-icons/MaterialIcons";
-import ImagePickerService from "@/components/imagePicker";
-import {
-  createProfileDetailsService,
-  createProfileImagesService,
-} from "@/redux/services/profileService";
-import setupProfileImageData from "@/components/sendProfileImageDetails";
+import { createProfileDetailsService } from "@/redux/services/profileService";
+import { Redirect } from "expo-router";
 
-interface ProfileData {
-  profilePhoto: string | null;
-  coverPhotos: string[];
-  [key: string]: any;
-}
+const ProfileDetailsPage = () => {
+  const profileData = useAppSelector((state: any) => state.profile.data);
 
-const ProfileImagePicker: React.FC = () => {
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const [coverPhotos, setCoverPhotos] = useState<string[]>([]);
+  const [formData, setFormData] = useState(profileData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const profileData = useAppSelector((state: any) => state.profile.data);
   const dispatch = useAppDispatch();
 
-  const pickImage = async (type: "profile" | "cover") => {
-    try {
-      if (type === "profile") {
-        const uri = await ImagePickerService.pickSingleImage();
-        if (uri) {
-          setProfilePhoto(uri);
-        }
-      } else {
-        if (coverPhotos.length >= 6) {
-          throw new Error("Maximum 6 cover photos allowed");
-        }
-        const uris = await ImagePickerService.pickMultipleImages(
-          6 - coverPhotos.length
-        );
-        if (uris.length > 0) {
-          const updatedCoverPhotos = [...coverPhotos, ...uris];
-          setCoverPhotos(updatedCoverPhotos);
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to pick image");
+  const handleInputChange = (key: string, value: any, category?: string) => {
+    if (category) {
+      setFormData({
+        ...formData,
+        [category]: { ...formData[category], [key]: value },
+      });
+    } else {
+      setFormData({ ...formData, [key]: value });
     }
-  };
-
-  const validateData = (data: ProfileData): boolean => {
-    if (!data.profilePhoto) {
-      setError("Profile photo is required");
-      return false;
-    }
-    if (data.coverPhotos.length === 0) {
-      setError("At least one cover photo is required");
-      return false;
-    }
-    return true;
   };
 
   const handleSubmit = async () => {
@@ -73,109 +37,84 @@ const ProfileImagePicker: React.FC = () => {
       setIsSubmitting(true);
       setError(null);
 
-      const updatedProfileData: ProfileData = {
-        ...profileData,
-        profilePhoto,
-        coverPhotos,
-      };
+      const response = await dispatch(createProfileDetailsService(formData));
 
-      // Validate data before dispatching
-      if (!validateData(updatedProfileData)) {
-        setError("Please provide valid profile data.");
-        return;
-      }
-
-      // Dispatch the action to create/update the profile details
-      const profileDetailsPayload = {
-        ...profileData, // Use updated profile data for API
-      };
-
-      const profileDetailsResponse = await dispatch(
-        createProfileDetailsService(profileDetailsPayload)
-      );
-
-      if (profileDetailsResponse.meta.requestStatus === "fulfilled") {
-        // Prepare and upload profile images
-        const profileImagesPayload: FormData = await setupProfileImageData({
-          profilePhoto,
-          coverPhotos,
-        });
-
-        const profileImagesResponse = await dispatch(
-          createProfileImagesService(profileImagesPayload)
-        );
-
-        if (profileImagesResponse.meta.requestStatus === "fulfilled") {
-          alert("Profile updated successfully!");
-        } else {
-          setError(
-            profileImagesResponse.payload?.message ||
-              "Profile details were updated, but uploading images failed."
-          );
-        }
+      if (response.meta.requestStatus === "fulfilled") {
+        Alert.alert("Success", "Profile updated successfully!");
+        return <Redirect href={"/step-8"} />;
       } else {
-        // Handle error from the first dispatch
-        setError(
-          profileDetailsResponse.payload?.message ||
-            "Failed to update profile details."
-        );
+        setError(response.payload?.message || "Failed to update profile.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update profile");
+      setError(
+        err instanceof Error ? err.message : "Failed to update profile."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderCoverPhoto = ({ item }: { item: string }) => (
-    <View style={styles.coverPhotoItem}>
-      <Image source={{ uri: item }} style={styles.coverPhotoImage} />
+  const renderSection = (sectionTitle: string, sectionData: object) => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{sectionTitle}</Text>
+      {Object.entries(sectionData).map(([key, value]) => {
+        // Handle array data differently (e.g., languages)
+        if (Array.isArray(value)) {
+          return (
+            <View key={key} style={styles.inputContainer}>
+              <Text style={styles.label}>{key}</Text>
+              <TextInput
+                style={styles.input}
+                value={value.join(", ")} // Join array items as a comma-separated string
+                onChangeText={
+                  (text) =>
+                    handleInputChange(key, text.split(", "), sectionTitle) // Split string back to array
+                }
+              />
+            </View>
+          );
+        }
+        // Handle objects (nested data)
+        if (typeof value === "object" && value !== null) {
+          return renderSection(key, value);
+        }
+        // Handle simple key-value pairs
+        return (
+          <View key={key} style={styles.inputContainer}>
+            <Text style={styles.label}>{key}</Text>
+            <TextInput
+              style={styles.input}
+              value={String(value)} // Cast to string
+              onChangeText={(text) =>
+                handleInputChange(key, text, sectionTitle)
+              }
+            />
+          </View>
+        );
+      })}
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Pick Your Photos</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}> Profile Details</Text>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      <View style={styles.imagePickerContainer}>
-        <TouchableOpacity
-          onPress={() => pickImage("profile")}
-          disabled={isSubmitting}
-        >
-          <View style={styles.imageButton}>
-            {profilePhoto ? (
-              <Image
-                source={{ uri: profilePhoto }}
-                style={[styles.image, styles.profileImage]}
-              />
-            ) : (
-              <Icon name="photo-camera" size={50} color="#fff" />
-            )}
+      {Object.entries(formData).map(([sectionKey, sectionData]) =>
+        typeof sectionData === "object" && sectionData !== null ? (
+          renderSection(sectionKey, sectionData)
+        ) : (
+          <View key={sectionKey} style={styles.inputContainer}>
+            <Text style={styles.label}>{sectionKey}</Text>
+            <TextInput
+              style={styles.input}
+              value={String(sectionData)} // Cast to string
+              onChangeText={(text) => handleInputChange(sectionKey, text)}
+            />
           </View>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.subtitle}>Cover Photos (Up to 6)</Text>
-      <FlatList
-        data={coverPhotos}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={renderCoverPhoto}
-        horizontal
-        contentContainerStyle={styles.coverPhotoList}
-      />
-
-      <TouchableOpacity
-        onPress={() => pickImage("cover")}
-        style={[
-          styles.addCoverPhotoButton,
-          isSubmitting && styles.disabledButton,
-        ]}
-        disabled={isSubmitting}
-      >
-        <Icon name="add-photo-alternate" size={50} color="#fff" />
-      </TouchableOpacity>
+        )
+      )}
 
       <TouchableOpacity
         style={[styles.saveButton, isSubmitting && styles.disabledButton]}
@@ -188,7 +127,7 @@ const ProfileImagePicker: React.FC = () => {
           <Text style={styles.saveButtonText}>Save Profile</Text>
         )}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -201,62 +140,44 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 30,
-    textAlign: "center",
+    marginBottom: 20,
     color: "#333",
+    textAlign: "center",
   },
-  subtitle: {
-    fontSize: 16,
+  errorText: {
+    color: "#ff3b30",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "600",
-    marginTop: 20,
     marginBottom: 10,
     color: "#555",
   },
-  imagePickerContainer: {
-    alignItems: "center",
-    marginBottom: 20,
+  inputContainer: {
+    marginBottom: 10,
   },
-  imageButton: {
-    width: 150,
-    height: 150,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 75,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 5,
+    color: "#666",
   },
-  image: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 75,
-  },
-  profileImage: {
-    borderRadius: 75,
-  },
-  coverPhotoList: {
-    paddingHorizontal: 10,
-  },
-  coverPhotoItem: {
-    marginRight: 10,
-  },
-  coverPhotoImage: {
-    width: 100,
-    height: 100,
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
     borderRadius: 8,
-  },
-  addCoverPhotoButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#333",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignSelf: "center",
-    marginVertical: 20,
+    padding: 10,
+    backgroundColor: "#fff",
   },
   saveButton: {
-    backgroundColor: "#FF5722",
+    backgroundColor: "#007bff",
     paddingVertical: 14,
-    borderRadius: 25,
+    borderRadius: 8,
     alignItems: "center",
     marginTop: 20,
   },
@@ -265,14 +186,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-  errorText: {
-    color: "#ff3b30",
-    textAlign: "center",
-    marginBottom: 10,
-  },
   disabledButton: {
     opacity: 0.6,
   },
 });
 
-export default ProfileImagePicker;
+export default ProfileDetailsPage;
