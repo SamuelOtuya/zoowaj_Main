@@ -9,25 +9,34 @@ import {
 import React, { useEffect } from "react";
 import { Redirect, router } from "expo-router"; // Import Redirect from expo-router
 const logo = require("../assets/images/splash.png");
-import { useAppSelector } from "@/redux/hooks/redux-hooks";
+import { useAppSelector, useAppDispatch } from "@/redux/hooks/redux-hooks";
+import { fetchAuthenticatedUser } from "@/redux/services/authService";
 
 const SplashScreen = () => {
-  const { login, details, isLoading } = useAppSelector((state) => state.auth);
+  const { user, login, details, isLoading } = useAppSelector(
+    (state) => state.auth
+  );
   const fontLogo = require("../assets/images/fontLogo.png");
+  const useDispatch = useAppDispatch();
 
   useEffect(() => {
     // If loading, do nothing, wait for the state to update
+    useDispatch(fetchAuthenticatedUser);
     if (isLoading) {
       return;
     }
   }, [isLoading]);
 
   // Redirect logic based on login and details state
-  if (login && !details) {
-    return <Redirect href="/(profile-details)/step-1" />;
-  } else if (details && login) {
+  if (login && user) {
     return <Redirect href="/(main)/tabs/home" />;
   }
+
+  // else if (login && !details) {
+  //   return <Redirect href="/(profile-details)/step-1" />;
+  // } else if (details && login) {
+  //   return <Redirect href="/(main)/tabs/home" />;
+  // }
 
   // else if (!login && !details) {
   //   return <Redirect href="/signup" />;
@@ -66,7 +75,7 @@ const SplashScreen = () => {
           }}
           onPress={() => {
             // Here you can use the router.push() for navigation to signup if needed
-            router.push("/onboard");
+            router.push("/(profile-details)/step-8");
           }}
         >
           <Text

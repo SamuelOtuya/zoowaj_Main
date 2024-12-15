@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from "react-native";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
+import { useAppDispatch } from "@/redux/hooks/redux-hooks";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import ImagePickerService from "@/components/imagePicker";
 import { createProfileImagesService } from "@/redux/services/profileService";
 import setupProfileImageData from "@/components/sendProfileImageDetails";
-import { Redirect } from "expo-router";
+import { router } from "expo-router";
 
 interface ProfileMedia {
   profilePhoto: string | null;
@@ -25,8 +26,6 @@ const ProfileImagePicker: React.FC = () => {
   const [coverPhotos, setCoverPhotos] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const profileData = useAppSelector((state: any) => state.profile.data);
   const dispatch = useAppDispatch();
 
   const pickImage = async (type: "profile" | "cover") => {
@@ -58,8 +57,8 @@ const ProfileImagePicker: React.FC = () => {
       setError("Profile photo is required");
       return false;
     }
-    if (data.coverPhotos.length === 0) {
-      setError("At least one cover photo is required");
+    if (data.coverPhotos.length === 1) {
+      setError("At least two cover photos are required");
       return false;
     }
     return true;
@@ -82,19 +81,16 @@ const ProfileImagePicker: React.FC = () => {
       }
 
       // Prepare and upload profile images
-      const profileImagesPayload: FormData =
-        await setupProfileImageData(userProfileData);
+      const payload: FormData = await setupProfileImageData(userProfileData);
 
-      const profileImagesResponse = await dispatch(
-        createProfileImagesService(profileImagesPayload)
-      );
+      const response = await dispatch(createProfileImagesService(payload));
 
-      if (profileImagesResponse.meta.requestStatus === "fulfilled") {
-        alert("Profile updated successfully!");
-        <Redirect href={"/(main)"} />;
+      if (response.meta.requestStatus === "fulfilled") {
+        Alert.alert("Profile updated successfully!");
+        await router.replace("/(main)/tabs");
       } else {
         setError(
-          profileImagesResponse.payload?.message ||
+          response.payload?.message ||
             "Profile details were updated, but uploading images failed."
         );
       }

@@ -1,18 +1,24 @@
 import { createSlice } from "@reduxjs/toolkit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { loginUserService, registerUserService } from "../services/authService";
-import { setAuthToken } from "@/api/api";
+import {
+  authenticateToken,
+  fetchAuthenticatedUserFormStorage,
+  loginUser,
+  registerUser,
+} from "../services/authService";
+import { UserData } from "@/constants/types";
+import { User } from "@/constants/models/user.model";
 
-interface authState {
-  user: Record<string, any> | null;
+interface AuthState {
+  user: User | null;
   token: string | null;
-  details: Record<string, any> | null;
+  details: UserData | null;
   error: string | null;
   isLoading: boolean;
   login: boolean;
 }
 
-const initialState: authState = {
+const initialState: AuthState = {
   user: null,
   token: null,
   details: null,
@@ -42,41 +48,82 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     // Register User
     builder
-      .addCase(registerUserService.pending, (state) => {
+      .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
-        state.error = "";
+        state.error = null; // Reset error on new request
       })
-      .addCase(registerUserService.fulfilled, (state, action) => {
+      .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
+        state.user = User.fromJSON(action.payload.user);
         state.token = action.payload.token;
         state.login = true;
-        setAuthToken(action.payload.token);
         AsyncStorage.setItem("bearerToken", action.payload.token);
-        AsyncStorage.setItem("userData", JSON.stringify(action.payload.user));
+        AsyncStorage.setItem("user", JSON.stringify(action.payload.user));
       })
-      .addCase(registerUserService.rejected, (state, action: any) => {
+      .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || "Registration failed";
+        state.error = action.error.message || "Registration failed";
       })
 
       // Login User
-      .addCase(loginUserService.pending, (state) => {
+      .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
-        state.error = "";
+        state.error = null; // Reset error on new request
       })
-      .addCase(loginUserService.fulfilled, (state, action) => {
+      .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
+        state.user = User.fromJSON(action.payload.user);
         state.token = action.payload.token;
         state.login = true;
-        setAuthToken(action.payload.token);
         AsyncStorage.setItem("bearerToken", action.payload.token);
-        AsyncStorage.setItem("userData", JSON.stringify(action.payload.user));
+        AsyncStorage.setItem("user", JSON.stringify(action.payload.user));
       })
-      .addCase(loginUserService.rejected, (state, action: any) => {
+      .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || "Login failed";
+        state.error = action.error.message || "Login failed";
+      })
+
+      // Fetch stored user
+      .addCase(fetchAuthenticatedUserFormStorage.pending, (state) => {
+        state.isLoading = true;
+        state.error = null; // Reset error on new request
+      })
+      .addCase(fetchAuthenticatedUserFormStorage.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload) {
+          state.user = User.fromJSON(action.payload);
+          state.login = true;
+        } else {
+          state.user = null;
+          state.login = false;
+          state.error = "No authenticated user found";
+        }
+      })
+      .addCase(fetchAuthenticatedUserFormStorage.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || "Authentication failed";
+      })
+
+      // Authenticate user token
+      .addCase(authenticateToken.pending, (state) => {
+        state.isLoading = true;
+        state.error = null; // Reset error on new request
+      })
+      .addCase(authenticateToken.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload) {
+          state.user = User.fromJSON(action.payload);
+ // Assuming token is in payload
+          AsyncStorage.setItem("user", JSON.stringify(action.payload));
+          state.login = true;
+        } else {
+          state.login = false;
+          state.error = "Invalid token";
+        }
+      })
+      .addCase(authenticateToken.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || "Authentication failed";
       });
   },
 });

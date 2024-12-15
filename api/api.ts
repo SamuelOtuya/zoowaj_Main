@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://capital-obviously-terrier.ngrok-free.app/api/v1/",
+  baseURL: "https://social-smart-raven.ngrok-free.app/api/v1/",
 });
 
 // Function to set the authorization token
@@ -22,11 +22,11 @@ API.interceptors.request.use((config) => {
 
 API.interceptors.response.use(
   (response) => {
-    console.log("Response:", response);
+    console.log("Incoming Response:", response);
     return response;
   },
   (error) => {
-    console.error("Error Response:", error.response || error.message);
+    console.error("Returned Error Response:", error.response || error.message);
     return Promise.reject(error);
   }
 );

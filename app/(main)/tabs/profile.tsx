@@ -1,190 +1,214 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Switch, SafeAreaView, ScrollView, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Switch,
+  SafeAreaView,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from "expo-status-bar";
-import * as ImagePicker from "expo-image-picker";
-import { AdvancedImage, upload, UploadApiOptions } from "cloudinary-react-native";
+import { StatusBar } from 'expo-status-bar';
+import * as ImagePicker from 'expo-image-picker';
 import Toast from 'react-native-toast-message';
-import { thumbnail } from "@cloudinary/url-gen/actions/resize";
-import { byRadius } from "@cloudinary/url-gen/actions/roundCorners";
-import { focusOn } from "@cloudinary/url-gen/qualifiers/gravity";
-import { FocusOn } from "@cloudinary/url-gen/qualifiers/focusOn";
-import { cld } from '../../../lib/cloudinary';
-import { supabase } from '../../../lib/supabase';
 import { useRouter } from 'expo-router';
 
-const ProfileScreen = () => {
-  const [profileImage, setProfileImage] = useState(null);
-  const [bannerImage, setBannerImage] = useState(null);
+interface ProfileData {
+  name: string;
+  location: string;
+  profileImage?: string;
+  bannerImage?: string;
+}
+
+const API_ENDPOINT = 'https://your-api-endpoint.com/api'; // Replace with your API endpoint
+const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload'; // Replace with your Cloudinary account details
+const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET'; // Replace with your Cloudinary preset
+
+const ProfileScreen: React.FC = () => {
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [bannerImage, setBannerImage] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [isFaceIDEnabled, setIsFaceIDEnabled] = useState<boolean>(true);
   const router = useRouter();
 
-  const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error logging out:', error.message);
+  const { width } = Dimensions.get('window');
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  const fetchProfileData = async () => {
+    try {
+      const response = await fetch(`${API_ENDPOINT}/profile`);
+      if (!response.ok) throw new Error('Failed to fetch profile data');
+      const data: ProfileData = await response.json();
+      setProfileData(data);
+      if (data.profileImage) setProfileImage(data.profileImage);
+      if (data.bannerImage) setBannerImage(data.bannerImage);
+    } catch (error) {
       Toast.show({
         type: 'error',
-        text1: 'Logout Error',
-        text2: error.message,
+        text1: 'Error',
+        text2: 'Failed to fetch profile data',
       });
-    } else {
-      console.log('Successfully logged out');
+    }
+  };
+
+  const pickImage = async (setImage: React.Dispatch<React.SetStateAction<string | null>>) => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (result.assets && result.assets.length > 0) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadImageToCloudinary = async (fileUri: string): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: fileUri,
+        type: 'image/jpeg',
+        name: 'upload.jpg',
+      });
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      return data.secure_url;
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Upload Error',
+        text2: 'Failed to upload image',
+      });
+      return null;
+    }
+  };
+
+  const updateProfileImage = async () => {
+    if (!profileImage) return;
+
+    const imageUrl = await uploadImageToCloudinary(profileImage);
+    if (imageUrl) {
+      try {
+        await fetch(`${API_ENDPOINT}/update-profile-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageUrl }),
+        });
+
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Profile image updated successfully',
+        });
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: 'Update Error',
+          text2: 'Failed to update profile image',
+        });
+      }
+    }
+  };
+
+  const updateBannerImage = async () => {
+    if (!bannerImage) return;
+
+    const imageUrl = await uploadImageToCloudinary(bannerImage);
+    if (imageUrl) {
+      try {
+        await fetch(`${API_ENDPOINT}/update-banner-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageUrl }),
+        });
+
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Banner image updated successfully',
+        });
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: 'Update Error',
+          text2: 'Failed to update banner image',
+        });
+      }
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch(`${API_ENDPOINT}/logout`, {
+        method: 'POST',
+      });
+
       Toast.show({
         type: 'success',
         text1: 'Logged Out',
         text2: 'You have successfully logged out.',
-        visibilityTime: 2000,
-        onHide: () => {
-          router.replace('/');
-        }
+      });
+
+      router.replace('/');
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Logout Error',
+        text2: 'Failed to log out',
       });
     }
-  };
-
-  const myProfileImage = cld.image("profileimages/your_profile_image_id");
-  const userBannerImage = cld.image("profileimages/file_byouqy");
-
-  // Apply the transformation.
-  myProfileImage
-    .resize(thumbnail().width(150).height(150).gravity(focusOn(FocusOn.face())))
-    .roundCorners(byRadius(100));
-
-  const pickProfileImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-    }
-  };
-
-  const { width } = Dimensions.get('window');
-  userBannerImage
-    .resize(thumbnail().width(width).height(150).gravity(focusOn(FocusOn.face())));
-
-  const pickBannerImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setBannerImage(result.assets[0].uri);
-    }
-  };
-
-  const uploadProfileImage = async (file) => {
-    const options = {
-      upload_preset: 'default',
-      unsigned: true,
-      resource_type: 'auto',
-    };
-
-    return new Promise(async (resolve, reject) => {
-      await upload(cld, {
-        file,
-        options: options,
-        callback: (error, response) => {
-          if (error || !response) {
-            reject(error);
-          } else {
-            resolve(response);
-          }
-        },
-      });
-    });
-  };
-
-  const uploadBannerImage = async () => {
-    if (!bannerImage) return;
-
-    const options = {
-      upload_preset: 'default',
-      unsigned: true,
-    };
-
-    return new Promise(async (resolve, reject) => {
-      await upload(cld, {
-        file: bannerImage,
-        options: options,
-        callback: (error, response) => {
-          if (error || !response) {
-            reject(error);
-          } else {
-            resolve(response);
-          }
-        },
-      });
-    });
   };
 
   return (
     <>
-      <StatusBar style='light' backgroundColor='black' />
+      <StatusBar style="light" backgroundColor="black" />
       <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <TouchableOpacity onPress={pickBannerImage}>
-            <Image source={{ uri: bannerImage ??""}} style={{ height: 200, objectFit: 'cover' }} />
+        <ScrollView>
+          <TouchableOpacity onPress={() => pickImage(setBannerImage)}>
+            <Image source={{ uri: bannerImage || undefined }} style={[styles.bannerImage, { width }]} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={uploadBannerImage}>
+          <TouchableOpacity onPress={updateBannerImage}>
             <Text>Upload Banner Image</Text>
           </TouchableOpacity>
 
           <View style={styles.profileInfo}>
-            <TouchableOpacity onPress={pickProfileImage}>
-              <AdvancedImage cldImg={myProfileImage} style={styles.profileImage} />
+            <TouchableOpacity onPress={() => pickImage(setProfileImage)}>
+              <Image source={{ uri: profileImage || undefined }} style={styles.profileImage} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => uploadProfileImage(profileImage)}>
+            <TouchableOpacity onPress={updateProfileImage}>
               <Text>Update Profile Image</Text>
             </TouchableOpacity>
-            <Text style={styles.name}>Ganesha Kencana</Text>
-            <Text style={styles.location}>Los Angeles, CA - 1.7km</Text>
+            <Text style={styles.name}>{profileData?.name || 'Loading...'}</Text>
+            <Text style={styles.location}>{profileData?.location || 'Loading...'}</Text>
           </View>
 
           <View style={styles.settingsSection}>
-            <TouchableOpacity style={styles.settingItem}>
-              <Ionicons name="person-outline" size={24} color="#20B2AA" />
-              <Text style={styles.settingText}>My Account</Text>
-              <Ionicons name="chevron-forward" size={24} color="#ccc" />
-            </TouchableOpacity>
-
             <View style={styles.settingItem}>
               <Ionicons name="finger-print-outline" size={24} color="#20B2AA" />
               <Text style={styles.settingText}>Face ID / Touch ID</Text>
-              <Switch
-                trackColor={{ false: "#767577", true: "#20B2AA" }}
-                thumbColor={true ? "#f4f3f4" : "#f4f3f4"}
-                ios_backgroundColor="#3e3e3e"
-                value={true}
-              />
+              <Switch value={isFaceIDEnabled} onValueChange={setIsFaceIDEnabled} />
             </View>
-
             <TouchableOpacity style={styles.settingItem} onPress={logout}>
               <Ionicons name="log-out-outline" size={24} color="#20B2AA" />
               <Text style={styles.settingText}>Log Out</Text>
-              <Ionicons name="chevron-forward" size={24} color="#ccc" />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.sectionTitle}>More</Text>
-
-          <View style={styles.settingsSection}>
-            <TouchableOpacity style={styles.settingItem}>
-              <Ionicons name="help-circle-outline" size={24} color="#20B2AA" />
-              <Text style={styles.settingText}>Help & Support</Text>
-              <Ionicons name="chevron-forward" size={24} color="#ccc" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.settingItem}>
-              <Ionicons name="information-circle-outline" size={24} color="#20B2AA" />
-              <Text style={styles.settingText}>About App</Text>
-              <Ionicons name="chevron-forward" size={24} color="#ccc" />
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -194,87 +218,16 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    height: 200,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-    paddingRight: 20,
-    paddingBottom: 20,
-  },
-  editButton: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 20,
-    padding: 8,
-    height: 50,
-    width: 50,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-
-
-  },
-  profileInfo: {
-    alignItems: 'center',
-    marginTop: -50,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#fff',
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 10,
-  },
-  location: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 5,
-  },
-  settingsSection: {
-    backgroundColor: '#fff',
-    marginTop: 20,
-    borderRadius: 10,
-    marginHorizontal: 10,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  settingText: {
-    flex: 1,
-    marginLeft: 15,
-    fontSize: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginLeft: 15,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  bannerImage: { height: 200 },
+  profileInfo: { alignItems: 'center', marginTop: -50 },
+  profileImage: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: '#fff' },
+  name: { fontSize: 24, fontWeight: 'bold', marginTop: 10 },
+  location: { fontSize: 16, color: '#666', marginTop: 5 },
+  settingsSection: { marginTop: 20, backgroundColor: '#fff', borderRadius: 10, marginHorizontal: 10 },
+  settingItem: { flexDirection: 'row', alignItems: 'center', padding: 15 },
+  settingText: { flex: 1, marginLeft: 15, fontSize: 16 },
 });
 
 export default ProfileScreen;
+

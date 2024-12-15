@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
 import { createProfileDetailsService } from "@/redux/services/profileService";
-import { Redirect } from "expo-router";
+import { router } from "expo-router";
 
 const ProfileDetailsPage = () => {
   const profileData = useAppSelector((state: any) => state.profile.data);
@@ -40,8 +40,8 @@ const ProfileDetailsPage = () => {
       const response = await dispatch(createProfileDetailsService(formData));
 
       if (response.meta.requestStatus === "fulfilled") {
-        Alert.alert("Success", "Profile updated successfully!");
-        return <Redirect href={"/step-8"} />;
+        Alert.alert("Success", "Profile updated successfully!");        
+        router.replace("/step-8");        
       } else {
         setError(response.payload?.message || "Failed to update profile.");
       }
