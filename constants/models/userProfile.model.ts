@@ -58,4 +58,10 @@ export class UserProfile extends User implements ProfileData {
       json // Pass the entire JSON object for constructing the profile
     );
   }
+
+  // Deserialize from JSON string
+  static fromJSONString(jsonString: string): UserProfile {
+    const jsonObject = JSON.parse(jsonString);
+    return this.fromJSON(jsonObject);
+  }
 }

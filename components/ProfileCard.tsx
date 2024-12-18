@@ -1,23 +1,29 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View, Dimensions } from 'react-native'
-import React from 'react'
-import { useRouter } from 'expo-router';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+} from "react-native";
+import React from "react";
+import { useRouter } from "expo-router";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
-const ProfileCard = ({ profile }) => {
+const ProfileCard = ({ profile }: { profile: any }) => {
   const router = useRouter();
 
   const handleProfilePress = () => {
     router.push({
-      pathname: `/profiledetail/${profile.id}`,
-      params: { profile: JSON.stringify(profile) }
+      pathname: '/(main)/details',
+      params: { profile: JSON.stringify(profile) },
     });
   };
   return (
     <View style={styles.container}>
       <View style={styles.cardContainer}>
-        <TouchableOpacity onPress={handleProfilePress} >
-
+        <TouchableOpacity onPress={handleProfilePress}>
           <Image source={profile.image} style={styles.image} />
         </TouchableOpacity>
         <View style={styles.infoContainer}>
@@ -26,7 +32,9 @@ const ProfileCard = ({ profile }) => {
             <Text style={styles.locationText}>Cape Town, Afrika</Text>
             <View style={styles.tagsContainer}>
               {profile.tags.map((item, index) => (
-                <Text key={index} style={styles.tagText}>{item}</Text>
+                <Text key={index} style={styles.tagText}>
+                  {item}
+                </Text>
               ))}
             </View>
           </View>
@@ -43,11 +51,11 @@ const ProfileCard = ({ profile }) => {
           </TouchableOpacity>
         </View>
       </View>
-    </View >
-  )
-}
+    </View>
+  );
+};
 
-export default ProfileCard
+export default ProfileCard;
 
 const styles = StyleSheet.create({
   container: {
@@ -55,49 +63,49 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   cardContainer: {
-    position: 'relative',
+    position: "relative",
     marginTop: 10,
     borderRadius: 26,
-    overflow: 'visible',
+    overflow: "visible",
   },
   image: {
     height: 400,
-    width: '100%',
+    width: "100%",
     borderRadius: 26,
   },
   infoContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 70,
-    width: '100%',
+    width: "100%",
   },
   textContainer: {
     paddingHorizontal: 20,
   },
   nameText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 24,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10
+    textShadowRadius: 10,
   },
   locationText: {
-    color: 'white',
-    fontWeight: 'normal',
+    color: "white",
+    fontWeight: "normal",
     fontSize: 14,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
     textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10
+    textShadowRadius: 10,
   },
   tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginTop: 10,
   },
   tagText: {
     color: "white",
     fontSize: 14,
-    backgroundColor: 'rgba(10, 10, 10, 0.8)',
+    backgroundColor: "rgba(10, 10, 10, 0.8)",
     paddingHorizontal: 14,
     paddingVertical: 2,
     borderRadius: 10,
@@ -105,10 +113,10 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   iconsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
     bottom: -28,
     left: 0,
     right: 0,
@@ -124,8 +132,8 @@ const styles = StyleSheet.create({
   icon: {
     width: 56,
     height: 56,
-    resizeMode: 'contain',
+    resizeMode: "contain",
     elevation: 5,
-    marginHorizontal: 14
+    marginHorizontal: 14,
   },
-})
+});

@@ -21,7 +21,7 @@ const Signup = () => {
       <View style={styles.container}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/SignUp")}
+          onPress={() => router.push("/SignIn")}
         >
           <Fontisto name="email" size={24} color="black" />
           <Text style={styles.buttonText}>Continue with Email/Password</Text>

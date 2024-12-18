@@ -87,12 +87,9 @@ const ProfileImagePicker: React.FC = () => {
 
       if (response.meta.requestStatus === "fulfilled") {
         Alert.alert("Profile updated successfully!");
-        await router.replace("/(main)/tabs");
+        await router.replace("/(main)/tabs/home");
       } else {
-        setError(
-          response.payload?.message ||
-            "Profile details were updated, but uploading images failed."
-        );
+        setError("Uploading profile images failed.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update profile");

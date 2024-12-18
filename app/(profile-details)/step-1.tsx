@@ -94,10 +94,7 @@ export default function Screen1() {
         />
 
         <Text style={styles.label}>Birth Date:</Text>
-        <Text
-          style={styles.dateText}
-          onPress={() => setShowDatePicker(true)}
-        >
+        <Text style={styles.dateText} onPress={() => setShowDatePicker(true)}>
           {birthDate.toDateString()}
         </Text>
         {showDatePicker && (

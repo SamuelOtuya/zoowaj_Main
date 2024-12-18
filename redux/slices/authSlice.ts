@@ -10,9 +10,8 @@ import { UserData } from "@/constants/types";
 import { User } from "@/constants/models/user.model";
 
 interface AuthState {
-  user: User | null;
+  user: User | null | Record<string, any>;
   token: string | null;
-  details: UserData | null;
   error: string | null;
   isLoading: boolean;
   login: boolean;
@@ -21,7 +20,6 @@ interface AuthState {
 const initialState: AuthState = {
   user: null,
   token: null,
-  details: null,
   isLoading: false,
   login: false,
   error: null,
@@ -35,14 +33,12 @@ const authSlice = createSlice({
       const { token, user, details } = action.payload;
       state.token = token;
       state.user = user || null;
-      state.details = details;
       state.login = !!token;
     },
     logout: (state) => {
       state.token = null;
       state.user = null;
       state.login = false;
-      state.details = null;
     },
   },
   extraReducers: (builder) => {
@@ -54,10 +50,10 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = User.fromJSON(action.payload.user);
-        state.token = action.payload.token;
+        state.user = action.payload.user;
+        state.token = action.payload.token!;
         state.login = true;
-        AsyncStorage.setItem("bearerToken", action.payload.token);
+        AsyncStorage.setItem("bearerToken", action.payload.token!);
         AsyncStorage.setItem("user", JSON.stringify(action.payload.user));
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -72,10 +68,10 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = User.fromJSON(action.payload.user);
-        state.token = action.payload.token;
+        state.user = action.payload.user;
+        state.token = action.payload.token!;
         state.login = true;
-        AsyncStorage.setItem("bearerToken", action.payload.token);
+        AsyncStorage.setItem("bearerToken", action.payload.token!);
         AsyncStorage.setItem("user", JSON.stringify(action.payload.user));
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -91,7 +87,7 @@ const authSlice = createSlice({
       .addCase(fetchAuthenticatedUserFormStorage.fulfilled, (state, action) => {
         state.isLoading = false;
         if (action.payload) {
-          state.user = User.fromJSON(action.payload);
+          state.user = action.payload;
           state.login = true;
         } else {
           state.user = null;
@@ -112,8 +108,8 @@ const authSlice = createSlice({
       .addCase(authenticateToken.fulfilled, (state, action) => {
         state.isLoading = false;
         if (action.payload) {
-          state.user = User.fromJSON(action.payload);
- // Assuming token is in payload
+          state.user = action.payload;
+          // Assuming token is in payload
           AsyncStorage.setItem("user", JSON.stringify(action.payload));
           state.login = true;
         } else {

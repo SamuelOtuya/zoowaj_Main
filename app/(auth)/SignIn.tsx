@@ -10,26 +10,23 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
-import { loginUserService } from "@/redux/services/authService";
+import { loginUser } from "@/redux/services/authService";
 import { useRouter } from "expo-router";
 import Button from "../../components/Button";
-import { Redirect } from "expo-router"; // Import Redirect
+import { fetchAuthenticatedUserData } from "@/redux/services/profileService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Auth() {
   const dispatch = useAppDispatch();
-  const { isLoading, error, login, details } = useAppSelector(
-    (state) => state.auth
-  );
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const router = useRouter();
 
-  // Redirect user based on login and details state
-  if (login && !details) {
-    return <Redirect href="/(profile-details)/step-1" />;
-  } else if (login && details) {
-    return <Redirect href="/(main)" />;
-  }
+  const { isLoading, error, login, user } = useAppSelector(
+    (state) => state.auth
+  );
+  const { authUser, loading } = useAppSelector((state) => state.profile);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   async function signInWithEmail() {
     if (!email || !password) {
@@ -59,14 +56,36 @@ export default function Auth() {
     const userData = { email, password };
 
     try {
-      await dispatch(loginUserService(userData));
+      const loginResponse = await dispatch(loginUser(userData));
+
+      if (loginResponse.meta.requestStatus === "fulfilled") {
+        // Check for user profile data in AsyncStorage
+        const storedProfileData = await AsyncStorage.getItem("authUser"); // Adjust key as necessary
+        const parsedProfileData = storedProfileData
+          ? JSON.parse(storedProfileData)
+          : null;
+
+        if (parsedProfileData && Object.keys(parsedProfileData).length > 0) {
+          // Navigate to home if profile data is found
+          router.replace("/(main)/tabs/home");
+        } else {
+          // Fetch user data from API if no profile data found
+          await dispatch(fetchAuthenticatedUserData()).then((fetchResponse) => {
+            if (fetchResponse.meta.requestStatus === "fulfilled") {
+              // Navigate to home after successful fetch
+              router.replace("/(main)/tabs/home");
+            } else {
+              // Navigate to step one if fetching fails
+              router.replace("/(profile-details)/step-1");
+            }
+          });
+        }
+      }
 
       if (error) {
         Alert.alert("Error", error);
         return;
       }
-
-      // Conditional redirects will be handled above by the Redirect component
     } catch (error) {
       Alert.alert(
         "Login failed",

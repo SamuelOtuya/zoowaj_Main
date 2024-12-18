@@ -1,0 +1,14 @@
+// rootReducer.ts
+import { combineReducers } from "@reduxjs/toolkit";
+import authReducer from "./slices/authSlice";
+import profileReducer from "./slices/profileSlice";
+
+const rootReducer = combineReducers({
+  auth: authReducer,
+  profile: profileReducer,
+});
+
+// Exporting RootState type
+export type RootState = ReturnType<typeof rootReducer>;
+
+export default rootReducer;

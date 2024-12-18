@@ -11,10 +11,8 @@ import {
 import { useNavigation } from "expo-router";
 import ProfileCard from "../../../components/ProfileCard";
 import API from "@/api/api";
-import reject from "../../../assets/images/reject.png";
-import match from "../../../assets/images/match.png";
-import stared from "../../../assets/images/stared.png";
-
+import { fetchAuthenticatedUserData } from "@/redux/services/profileService";
+import { useAppDispatch } from "@/redux/hooks/redux-hooks";
 interface Profile {
   id: string;
   image: string;
@@ -33,6 +31,11 @@ const HomeScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
+  const dispatch = useAppDispatch();
+
+  const reject = require("../../../assets/images/reject.png");
+  const match = require("../../../assets/images/match.png");
+  const stared = require("../../../assets/images/stared.png");
 
   const fetchProfiles = async () => {
     try {
@@ -67,8 +70,14 @@ const HomeScreen = () => {
     }
   };
 
+  const fetchUserData = async () => {
+    //Fetch user Data from API
+    await dispatch(fetchAuthenticatedUserData()); // Set loading to false after fetching data
+  };
+
   useEffect(() => {
     fetchProfiles();
+    fetchUserData();
   }, []);
 
   const handleRefresh = () => {

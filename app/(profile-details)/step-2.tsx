@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  Button,
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  ScrollView,
 } from "react-native";
 import { useAppDispatch } from "@/redux/hooks/redux-hooks";
 import { useRouter } from "expo-router";
@@ -45,29 +45,22 @@ export default function Screen2() {
   const handleInterestChange = (interest: string) => {
     setSelectedInterests((prev) => {
       if (prev.includes(interest)) {
-        // Remove interest if already selected
         return prev.filter((item) => item !== interest);
       } else if (prev.length < MAX_INTERESTS) {
-        // Add interest if not already selected and within limit
         return [...prev, interest];
       }
-      return prev; // Return previous state if limit reached
+      return prev;
     });
   };
 
   // Function to handle form submission
   const handleSubmit = () => {
-    // Dispatch selected interests to Redux store
     dispatch(
       updateProfileField({ key: "interests", value: selectedInterests })
     );
-
-    // Log profile data for debugging
     console.log(
       `Profile Data before navigation: ${JSON.stringify(profileData, null, 2)}`
     );
-
-    // Navigate to the next step
     router.push("/(profile-details)/step-3");
   };
 
@@ -85,53 +78,79 @@ export default function Screen2() {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Select Your Interests:</Text>
-      <Text style={styles.counter}>
-        Selected: {selectedInterests.length} / {MAX_INTERESTS}
-      </Text>
-      <FlatList
-        data={interests}
-        renderItem={renderItem}
-        keyExtractor={(item) => item}
-        numColumns={2}
-        contentContainerStyle={styles.listContainer}
-      />
-      <Button
-        title="Next"
-        onPress={handleSubmit}
-        disabled={selectedInterests.length === 0} // Disable button if no interests are selected
-      />
-    </View>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Select Your Interests:</Text>
+        <Text style={styles.counter}>
+          Selected: {selectedInterests.length} / {MAX_INTERESTS}
+        </Text>
+        <FlatList
+          data={interests}
+          renderItem={renderItem}
+          keyExtractor={(item) => item}
+          numColumns={2}
+          contentContainerStyle={styles.listContainer}
+        />
+        <TouchableOpacity
+          style={[
+            // styles.button,
+            {
+              height: 40,
+              borderRadius: 8,
+              padding: 10,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor:
+                selectedInterests.length === 0 ? "#ccc" : "#007BFF",
+            },
+          ]}
+          onPress={handleSubmit}
+          disabled={selectedInterests.length === 0}
+        >
+          <Text style={styles.buttonText}>Next</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    backgroundColor: "#f9f9f9",
+    paddingBottom: 20,
+  },
   container: {
-    flex: 1,
     padding: 20,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f9f9f9",
+    flexGrow: 1,
+    justifyContent: "center",
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
+    color: "#444",
     marginBottom: 10,
   },
   counter: {
     fontSize: 16,
     marginBottom: 10,
+    color: "#333",
   },
   listContainer: {
     paddingBottom: 20,
+    flexGrow: 1,
+    justifyContent: "center",
   },
   button: {
     flex: 1,
-    padding: 15,
-    margin: 5,
-    backgroundColor: "lightgray",
-    borderRadius: 10,
+    paddingVertical: 12,
+    marginHorizontal: 5,
+    marginBottom: 10,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "lightgray", // Default color for unselected buttons
   },
   selectedButton: {
     backgroundColor: "#4CAF50", // Green when selected
@@ -139,5 +158,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "bold",
+    fontSize: 16,
   },
 });

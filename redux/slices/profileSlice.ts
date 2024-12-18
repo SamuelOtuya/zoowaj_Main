@@ -7,10 +7,11 @@ import {
   fetchAuthenticatedUserData,
 } from "../services/profileService";
 import { ProfileData } from "@/constants/types";
+import { UserProfile } from "@/constants/models/userProfile.model";
 
 interface ProfileState {
   data: ProfileData | null; // Holds updated profile fields
-  authUser: ProfileData | null; // Holds full profile info fetched or created
+  authUser: UserProfile | null | Record<string, any>; // Holds full profile info fetched or created
   error: string | null;
   loading: boolean;
 }
@@ -69,7 +70,10 @@ const profileSlice = createSlice({
       .addCase(updateProfileDetailsService.fulfilled, (state, action) => {
         state.loading = false;
         state.authUser = action.payload.profile;
-        AsyncStorage.setItem("profileData", JSON.stringify(state.authUser));
+        AsyncStorage.setItem(
+          "profileData",
+          JSON.stringify(action.payload.profile)
+        );
       })
       .addCase(updateProfileDetailsService.rejected, (state, action) => {
         state.loading = false;
@@ -83,23 +87,30 @@ const profileSlice = createSlice({
       })
       .addCase(fetchProfileDataFormStorage.fulfilled, (state, action) => {
         state.loading = false;
-        state.authUser = { ...action.payload.profile };
-        AsyncStorage.setItem("profileData", JSON.stringify(state.authUser));
+        if (action.payload) {
+          state.authUser = action.payload;
+        } else {
+          state.authUser = null;
+          state.error = "No authenticated user found";
+        }
       })
       .addCase(fetchProfileDataFormStorage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Profile creation failed";
       })
 
+      //Create Profile and Cover Photos
       .addCase(createProfileImagesService.pending, (state) => {
         state.loading = true;
       })
       .addCase(createProfileImagesService.fulfilled, (state, action) => {
         state.loading = false;
-        state.authUser = { ...action.payload.profile };
-
+        state.authUser = action.payload.profile;
         try {
-          AsyncStorage.setItem("profileData", JSON.stringify(state.authUser));
+          AsyncStorage.setItem(
+            "profileData",
+            JSON.stringify(action.payload.profile)
+          );
         } catch (error) {
           console.error("Error saving profile to AsyncStorage:", error);
         }
@@ -109,12 +120,13 @@ const profileSlice = createSlice({
         state.error = action.error.message || "Profile image update failed";
       })
 
+      //Fetch User Data from API
       .addCase(fetchAuthenticatedUserData.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchAuthenticatedUserData.fulfilled, (state, action) => {
         state.loading = false;
-        state.authUser = action.payload;
+        state.authUser = action.payload?.profile || null;
 
         try {
           AsyncStorage.setItem("profileData", JSON.stringify(state.authUser));

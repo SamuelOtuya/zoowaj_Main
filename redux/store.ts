@@ -1,30 +1,32 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import authReducer from "./slices/authSlice";
-import profileReducer from "../redux/slices/profileSlice";
-import { PersistConfig } from "redux-persist";
+import rootReducer from "./rootReducer"; // Ensure this imports your combined reducers
 
-// Persist config for auth state
-const persistConfig: PersistConfig<any> = {
-  key: "root", // Root key to identify the persisted state
-  storage: AsyncStorage, // Use AsyncStorage directly
-  whitelist: ["auth", "profile"], // Only persist the 'auth' slice (authentication and user data)
+// Persist config for Redux store
+const persistConfig = {
+  key: "root",
+  storage: AsyncStorage,
 };
 
-// Persisted reducer for auth
-const persistedReducer = persistReducer(persistConfig, authReducer);
+// Wrap the root reducer with the persist logic
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// Store configuration
+// Configure the store with middleware
 export const store = configureStore({
-  reducer: {
-    auth: persistedReducer, // Auth slice with persistence logic
-    profile: profileReducer,
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ["persist/PERSIST"], // Ignore persistence-related actions
+        // Ignore specific actions related to persistence
+        ignoredActions: [
+          "persist/PERSIST",
+          "persist/REHYDRATE",
+          "persist/FLUSH",
+          "persist/PAUSE",
+          "persist/PURGE",
+          "persist/REGISTER",
+        ],
       },
     }),
 });
@@ -32,8 +34,6 @@ export const store = configureStore({
 // Set up persistence
 export const persister = persistStore(store);
 
-// Type the RootState to represent the entire store's state
+// Type definitions for RootState and AppDispatch
 export type RootState = ReturnType<typeof store.getState>;
-
-// Type the ApiDispatch to represent the dispatch function of your store, useful for async actions
 export type AppDispatch = typeof store.dispatch;

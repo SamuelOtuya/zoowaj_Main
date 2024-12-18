@@ -4,52 +4,43 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Provider } from "react-redux";
-import { persister, store } from "@/redux/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { useAppSelector } from "@/redux/hooks/redux-hooks";
 import { View, Text } from "react-native";
 import "../global.css";
+
+// Redux store and persistor
+import { store, persister, AppDispatch } from "@/redux/store";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  // Load custom fonts
+  const [fontsLoaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
+  // Hide splash screen once fonts are loaded and reset app data
   useEffect(() => {
-    const hideSplashScreen = async () => {
-      if (loaded) {
+    const initializeApp = async () => {
+      if (fontsLoaded) {
         await SplashScreen.hideAsync();
       }
     };
 
-    hideSplashScreen();
-  }, [loaded]);
+    initializeApp();
+  }, [fontsLoaded]);
 
-  // If fonts are not loaded yet, return null to avoid rendering the app
-  if (!loaded) {
+  // Render a blank screen while fonts are loading
+  if (!fontsLoaded) {
     return null;
   }
 
-  const StackScreens = () => {
-    const { login, details } = useAppSelector((state) => state.auth);
-
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        {login && !details && <Stack.Screen name="(profile-details)" />}
-        {details && login && <Stack.Screen name="(main)" />}
-        {!login && !details && <Stack.Screen name="(auth)" />}
-      </Stack>
-    );
-  };
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Redux Provider */}
+      {/* Redux Provider for global state management */}
       <Provider store={store}>
-        {/* PersistGate for rehydrating persisted state */}
+        {/* PersistGate to rehydrate the Redux store */}
         <PersistGate
           loading={
             <View
@@ -64,8 +55,10 @@ export default function RootLayout() {
           }
           persistor={persister}
         >
-          {/* App Screens */}
-          <StackScreens />
+          {/* Navigation stack for screens */}
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+          </Stack>
         </PersistGate>
       </Provider>
     </GestureHandlerRootView>

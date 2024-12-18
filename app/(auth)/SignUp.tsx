@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   TextInput,
@@ -10,8 +10,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
-import { registerUserService } from "@/redux/services/authService";
-import { Redirect, useRouter } from "expo-router";
+import { registerUser } from "@/redux/services/authService";
+import { useRouter } from "expo-router";
 import Button from "../../components/Button";
 
 export default function Auth() {
@@ -19,15 +19,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { isLoading, error, login, details } = useAppSelector(
-    (state) => state.auth
-  );
-
-  if (login && !details) {
-    return <Redirect href={"/(profile-details)/step-1"} />;
-  } else if (login && details) {
-    return <Redirect href={"/(main)"} />;
-  }
+  const { isLoading, error } = useAppSelector((state) => state.auth);
 
   async function signUpWithEmail() {
     if (!email || !password) {
@@ -53,11 +45,16 @@ export default function Auth() {
     }
 
     const userData = { email, password };
-    const userSignUp = await dispatch(registerUserService(userData));
+    const userSignUp = await dispatch(registerUser(userData));
+
+    // Check if the signup was successful
     if (userSignUp.meta.requestStatus === "fulfilled") {
-      return <Redirect href={"/(profile-details)/step-1"} />;
+      // Navigate to step-1 after successful signup
+      router.push("/(profile-details)/step-1");
+      return; // Exit the function after navigation
     }
 
+    // Handle error if signup failed
     if (error) {
       Alert.alert("Error", error);
       console.log(error, "=============");
