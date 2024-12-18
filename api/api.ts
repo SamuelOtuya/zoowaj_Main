@@ -1,10 +1,12 @@
 import axios from "axios";
 
 export const Url1 = "https://capital-obviously-terrier.ngrok-free.app/api/v1";
-export const Url2 = "https://social-smart-raven.ngrok-free.app/api/v1/";
+export const Url2 = "https://social-smart-raven.ngrok-free.app/api/v1";
+
+export const baseURL = Url2;
 
 const API = axios.create({
-  baseURL: Url1,
+  baseURL: baseURL,
 });
 
 // Function to set the authorization token
@@ -19,19 +21,35 @@ export const setAuthToken = (token: string) => {
 };
 
 // API.interceptors.request.use((config) => {
-//   console.log("Outgoing Request:", config);
+//   console.log("\n");
+//   console.log("\n");
+//   console.log("\n");
+//   console.log("\n");
+//   console.log("Outgoing Request:", JSON.stringify(config, null, 2));
 //   return config;
 // });
 
 // API.interceptors.response.use(
 //   (response) => {
-//     console.log("Incoming Response:", response);
+//     console.log("\n");
+//     console.log("\n");
+//     console.log("\n");
+//     console.log("\n");
+//     console.debug("Incoming Response:", JSON.stringify(response, null, 2));
 //     return response;
-//   },
-//   (error) => {
-//     console.error("Returned Error Response:", error.response || error.message);
-//     return Promise.reject(error);
 //   }
+// (error) => {
+//   console.log("\n");
+//   console.log("\n");
+//   console.log("\n");
+//   console.log("\n");
+//   console.error(
+//     "Returned Error Response:",
+//     JSON.stringify(error.response, null, 2) ||
+//       JSON.stringify(error.message, null, 2)
+//   );
+//   return Promise.reject(error);
+// }
 // );
 
 export default API;

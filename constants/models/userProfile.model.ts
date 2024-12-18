@@ -1,45 +1,98 @@
-import { ProfileData } from "../types";
-import { User } from "./user.model";
+import { UserProfileData } from "../types";
 
-export class UserProfile extends User implements ProfileData {
+// UserProfile.ts
+export class UserProfile implements UserProfileData {
   userId: string;
-  profilePhoto: any;
-  about: any;
-  religiosity: any;
-  marriageIntentions: any;
-  languageAndEthnicity: any;
-  educationAndCareer: any;
-  interests: any[];
+  profilePhoto: {
+    url: string;
+    public_id: string;
+  };
+  about: {
+    first_name: string;
+    last_name: string;
+    username: string;
+    phone_number?: string;
+    birthDate?: Date; // Keep as Date type
+    height?: string;
+    maritalStatus?: string;
+    tagline?: string;
+  };
+  religiosity: {
+    muslimSect?: string;
+    isConvert?: boolean;
+    religiousPractice?: string;
+    doYouPray?: string;
+    diet?: string;
+    doYouSmoke?: boolean;
+    hasTattoos?: boolean;
+  };
+  marriageIntentions: {
+    lookingToMarry?: string;
+    willingToRelocate?: boolean;
+    wantsChildren?: boolean;
+    livingArrangements?: string;
+    iceBreaker?: string;
+  };
+  languageAndEthnicity: {
+    languages: string[];
+    ethnicGroup: string;
+    ethnicOrigin: string;
+    biography?: string;
+  };
+  educationAndCareer: {
+    profession: string;
+    education: string;
+    jobTitle: string;
+  };
+  interests: any[]; // Consider defining more specific types if possible
   likes: any[];
   favorites: any[];
   coverPhotos: any[];
+  createdAt: Date; // Keep as Date type
+  updatedAt: Date; // Keep as Date type
 
-  constructor(userId: string, profileData: Record<string, any>) {
-    super(
-      profileData.userId,
-      profileData.about.username + "@example.com",
-      profileData.createdAt,
-      profileData.updatedAt
-    );
-    this.userId = userId;
-    this.profilePhoto = profileData.profilePhoto;
-    this.about = profileData.about;
-    this.religiosity = profileData.religiosity;
-    this.marriageIntentions = profileData.marriageIntentions;
-    this.languageAndEthnicity = profileData.languageAndEthnicity;
-    this.educationAndCareer = profileData.educationAndCareer;
-    this.interests = profileData.interests || [];
-    this.likes = profileData.likes || [];
-    this.favorites = profileData.favorites || [];
-    this.coverPhotos = profileData.coverPhotos || [];
+  constructor(data: UserProfileData) {
+    this.userId = data.userId;
+    this.profilePhoto = data.profilePhoto;
+
+    this.about = {
+      ...data.about,
+      birthDate:
+        typeof data.about?.birthDate === "string"
+          ? new Date(data.about.birthDate)
+          : data.about?.birthDate,
+    };
+
+    this.religiosity = data.religiosity || {};
+    this.marriageIntentions = data.marriageIntentions || {};
+    this.languageAndEthnicity = data.languageAndEthnicity || {};
+    this.educationAndCareer = data.educationAndCareer || {};
+    this.interests = data.interests || [];
+    this.likes = data.likes || [];
+    this.favorites = data.favorites || [];
+    this.coverPhotos = data.coverPhotos || [];
+
+    this.createdAt =
+      typeof data.createdAt === "string"
+        ? new Date(data.createdAt)
+        : data.createdAt; // Creation Date
+    this.updatedAt =
+      typeof data.updatedAt === "string"
+        ? new Date(data.updatedAt)
+        : data.updatedAt; // Update Date
   }
 
   // Serialize to JSON
-  toJSON(): Record<string, any> {
+  toJSON(): UserProfileData {
     return {
-      ...super.toJSON(), // Include properties from User class
+      userId: this.userId,
       profilePhoto: this.profilePhoto,
-      about: this.about,
+      about: {
+        ...this.about,
+        birthDate: this.about.birthDate
+          ? this.about.birthDate.toISOString()
+          : undefined,
+      },
       religiosity: this.religiosity,
       marriageIntentions: this.marriageIntentions,
       languageAndEthnicity: this.languageAndEthnicity,
@@ -48,20 +101,42 @@ export class UserProfile extends User implements ProfileData {
       likes: this.likes,
       favorites: this.favorites,
       coverPhotos: this.coverPhotos,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.updatedAt.toISOString(),
     };
   }
 
-  // Deserialize from JSON
-  static fromJSON(json: Record<string, any>): UserProfile {
-    return new UserProfile(
-      json.userId,
-      json // Pass the entire JSON object for constructing the profile
-    );
+  static fromJSON(data: UserProfileData): UserProfile {
+    return new UserProfile({
+      ...data,
+      createdAt: new Date(data.createdAt),
+      updatedAt: new Date(data.updatedAt),
+      about: {
+        ...data.about,
+        birthDate:
+          typeof data.about?.birthDate === "string"
+            ? new Date(data.about.birthDate)
+            : data.about?.birthDate,
+      },
+    });
   }
 
-  // Deserialize from JSON string
+  // Static method to create an instance from a JSON string
   static fromJSONString(jsonString: string): UserProfile {
-    const jsonObject = JSON.parse(jsonString);
-    return this.fromJSON(jsonObject);
+    const data = JSON.parse(jsonString);
+
+    return UserProfile.fromJSON(data);
   }
+
+  // Example method to get full name
+  getFullName(): string {
+    return `${this.about.first_name} ${this.about.last_name}`;
+  }
+
+  // Example method to check if user is open to marriage
+  isOpenToMarriage(): boolean {
+    return this.marriageIntentions.lookingToMarry === "yes";
+  }
+
+  // Add more methods as needed for your application
 }

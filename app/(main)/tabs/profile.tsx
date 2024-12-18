@@ -20,42 +20,46 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
 import { logout as logoutAction } from "@/redux/slices/authSlice";
-
-interface ProfileData {
-  name: string;
-  location: string;
-  profileImage?: string;
-  bannerImage?: string;
-}
+import { UserProfile } from "@/constants/models/userProfile.model";
 
 const API_ENDPOINT = "https://your-api-endpoint.com/api"; // Replace with your API endpoint
 
 const ProfileScreen: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [bannerImage, setBannerImage] = useState<string | null>(null);
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [isFaceIDEnabled, setIsFaceIDEnabled] = useState<boolean>(true);
 
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
+  // Select authUser data from Redux store
+  const profileDetails = useAppSelector((state) => state.profile.authUser);
 
-  const fetchProfileData = async () => {
+  // Update local state when profileDetails changes
+  useEffect(() => {
+    if (profileDetails) {
+      setProfileImage(profileDetails.profilePhoto.url || null);
+      setBannerImage(profileDetails.coverPhotos[0]?.url || null);
+    }
+  }, [profileDetails]);
+
+  const handleLogout = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINT}/profile`);
-      if (!response.ok) throw new Error("Failed to fetch profile data");
-      const data: ProfileData = await response.json();
-      setProfileData(data);
-      if (data.profileImage) setProfileImage(data.profileImage);
-      if (data.bannerImage) setBannerImage(data.bannerImage);
+      await AsyncStorage.clear(); // Clear local storage
+      dispatch(logoutAction()); // Dispatch Redux logout action
+      console.log("Logout successful");
+      router.replace("/SignIn"); // Redirect to SignIn page
+      Toast.show({
+        type: "success",
+        text1: "Logged Out",
+        text2: "You have successfully logged out.",
+      });
     } catch (error) {
+      console.error("Logout failed:", error);
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: "Failed to fetch profile data",
+        text1: "Logout Error",
+        text2: "Failed to log out. Please try again.",
       });
     }
   };
@@ -72,30 +76,6 @@ const ProfileScreen: React.FC = () => {
 
     if (result.assets && result.assets.length > 0) {
       setImage(result.assets[0].uri);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      // Clear local storage
-      await AsyncStorage.clear();
-      // Dispatch Redux logout action
-      dispatch(logoutAction());
-      console.log("Logout successful");
-      // Redirect to SignIn page
-      router.replace("/SignIn");
-      Toast.show({
-        type: "success",
-        text1: "Logged Out",
-        text2: "You have successfully logged out.",
-      });
-    } catch (error) {
-      console.error("Logout failed:", error);
-      Toast.show({
-        type: "error",
-        text1: "Logout Error",
-        text2: "Failed to log out. Please try again.",
-      });
     }
   };
 
@@ -117,9 +97,11 @@ const ProfileScreen: React.FC = () => {
             />
           </TouchableOpacity>
           <View style={styles.profileInfo}>
-            <Text style={styles.name}>{profileData?.name || "Loading..."}</Text>
+            <Text style={styles.name}>
+              {profileDetails?.about.username || "Loading..."}
+            </Text>
             <Text style={styles.location}>
-              {profileData?.location || "Loading..."}
+              {profileDetails?.about.phone_number || "Loading..."}
             </Text>
           </View>
           <View style={styles.settingsSection}>

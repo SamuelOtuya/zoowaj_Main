@@ -26,6 +26,7 @@ const SplashScreen = () => {
 
   // Function to reset app data
   const resetAppData = async () => {
+    console.log("Resetting app");
     try {
       await AsyncStorage.clear();
       await persister.purge();
@@ -69,7 +70,7 @@ const SplashScreen = () => {
   if (!isDataLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
+        <Text>Index Loading...</Text>
       </View>
     );
   }

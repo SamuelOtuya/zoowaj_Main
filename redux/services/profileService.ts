@@ -1,16 +1,16 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import API, { setAuthToken } from "@/api/api";
+import API, { baseURL, setAuthToken } from "@/api/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ProfileData } from "@/constants/types";
+import { UserProfileData } from "@/constants/types";
 
 interface ProfileResponse {
-  profile: ProfileData; // User object returned from the server
+  profile: UserProfileData; // User object returned from the server
 }
 
 // Update Profile Details
 export const updateProfileDetailsService = createAsyncThunk<
   ProfileResponse, // Ensure the return type matches ProfileData structure
-  { details: Partial<ProfileData> } // Use Partial to allow partial updates
+  { details: Partial<UserProfileData> } // Use Partial to allow partial updates
 >("auth/user/updateProfileDetails", async (data, thunkAPI) => {
   try {
     const token = await AsyncStorage.getItem("bearerToken");
@@ -54,13 +54,12 @@ export const createProfileImagesService = createAsyncThunk<
 >("profile/saveProfileImages", async (formData: FormData, thunkAPI) => {
   try {
     const token = await AsyncStorage.getItem("bearerToken");
+    console.log("TOKEN", token);
     if (!token) {
       return thunkAPI.rejectWithValue("No token found");
     }
 
-    const baseURL = "https://social-smart-raven.ngrok-free.app";
-    const Url1 = "https://capital-obviously-terrier.ngrok-free.app/api/v1";
-    const response = await fetch(`${Url1}/user/profile-images`, {
+    const response = await fetch(`${baseURL}/user/profile-images`, {
       method: "POST",
       headers: {
         "Content-Type": "multipart/form-data", // Not necessary but can be included
@@ -86,7 +85,7 @@ export const createProfileImagesService = createAsyncThunk<
 
 // Fetch Authenticated User from Async Storage
 export const fetchProfileDataFormStorage = createAsyncThunk<
-  ProfileData | null,
+  UserProfileData | null,
   void // No parameters needed for this function
 >("auth/user/fetchProfileDataFormStorage", async (_, thunkAPI) => {
   console.log("fetching Authenticated User Profile Data from Storage");
@@ -112,13 +111,8 @@ export const fetchAuthenticatedUserData = createAsyncThunk<
   try {
     const token = await AsyncStorage.getItem("bearerToken");
     if (!token) return thunkAPI.rejectWithValue("No token found");
-
-    const response = await API.get(
-      `user/profile/?userId=676124f19120cd03c6422ce7`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    setAuthToken(token);
+    const response = await API.get(`user/profile`);
     console.log("USER DATA FROM API:", response.data);
     return response.data as ProfileResponse; // Ensure backend returns user data in expected format
   } catch (error: any) {

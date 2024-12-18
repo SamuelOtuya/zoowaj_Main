@@ -2,19 +2,22 @@
 export interface UserData {
   id: string; // User ID
   email: string; // User Email
-  createdAt: Date; // Creation Date
-  updatedAt: Date; // Update Date
+  createdAt: Date | string; // Creation Date
+  updatedAt: Date | string; // Update Date
 }
 
-export interface ProfileData {
+export interface UserProfileData {
   userId: string;
-  profilePhoto: any; // Define more specific types if possible
+  profilePhoto: {
+    url: string;
+    public_id: string;
+  };
   about: {
     first_name: string;
     last_name: string;
     username: string;
     phone_number?: string;
-    birthDate?: string;
+    birthDate?: Date | string;
     height?: string;
     maritalStatus?: string;
     tagline?: string;
@@ -50,4 +53,6 @@ export interface ProfileData {
   likes: any[];
   favorites: any[];
   coverPhotos: any[];
+  createdAt: Date | string; // Creation Date
+  updatedAt: Date | string; // Update Date
 }

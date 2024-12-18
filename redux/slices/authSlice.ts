@@ -109,7 +109,6 @@ const authSlice = createSlice({
         state.isLoading = false;
         if (action.payload) {
           state.user = action.payload;
-          // Assuming token is in payload
           AsyncStorage.setItem("user", JSON.stringify(action.payload));
           state.login = true;
         } else {
