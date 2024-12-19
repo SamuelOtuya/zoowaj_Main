@@ -1,9 +1,19 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View, FlatList, TextInput, SafeAreaView, ActivityIndicator } from 'react-native';
-import React, { useEffect, useState, useCallback } from 'react';
-import { Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import API from '@/api/api';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  FlatList,
+  TextInput,
+  SafeAreaView,
+  ActivityIndicator,
+} from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { Stack } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import API from "@/api/api";
 
 // Define types for better type safety
 interface User {
@@ -21,26 +31,28 @@ interface ConversationItemProps {
 
 const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
   const router = useRouter();
-  const defaultAvatarPath = require('../../../assets/images/profile.png')
+  const defaultAvatarPath = require("../../../assets/images/profile.png");
 
   return (
     <TouchableOpacity
       style={styles.conversationItem}
-      onPress={() => router.push({
-        pathname: '/(main)/chat/id',
-        params: { id: item.id }
-      })}
+      onPress={() =>
+        router.push({
+          pathname: "/(main)/chat/id",
+          params: { id: item.id },
+        })
+      }
     >
       {item.profilePicture ? (
-        <Image 
-          source={{ uri: item.profilePicture }} 
+        <Image
+          source={{ uri: item.profilePicture }}
           style={styles.avatar}
           defaultSource={defaultAvatarPath}
         />
       ) : (
         <View style={styles.avatar} />
       )}
-      
+
       <View style={styles.conversationDetails}>
         <View style={styles.nameTimeContainer}>
           <Text style={styles.name}>{item.username}</Text>
@@ -54,7 +66,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
           </Text>
         )}
       </View>
-      
+
       {item.unreadCount && item.unreadCount > 0 && (
         <View style={styles.unreadBadge}>
           <Text style={styles.unreadText}>{item.unreadCount}</Text>
@@ -67,20 +79,20 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
 const MessageTab = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const backgreenarrowPath = require('../../../assets/images/backgreenarrow.png')
+  const backgreenarrowPath = require("../../../assets/images/backgreenarrow.png");
 
   // Fetch users from API
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await API.get('/users'); // Adjust endpoint as needed
+
+      const response = await API.get("/users"); // Adjust endpoint as needed
       const userData = response.data;
-      
+
       // Transform API response if needed
       const transformedUsers: User[] = userData.map((user: any) => ({
         id: user.id,
@@ -88,14 +100,14 @@ const MessageTab = () => {
         profilePicture: user.profile_picture,
         lastMessage: user.last_message,
         lastMessageTime: user.last_message_time,
-        unreadCount: user.unread_count
+        unreadCount: user.unread_count,
       }));
-      
+
       setUsers(transformedUsers);
       setFilteredUsers(transformedUsers);
     } catch (err) {
-      setError('Failed to fetch users. Please try again later.');
-      console.error('Error fetching users:', err);
+      setError("Failed to fetch users. Please try again later.");
+      console.error("Error fetching users:", err);
     } finally {
       setLoading(false);
     }
@@ -106,18 +118,21 @@ const MessageTab = () => {
   }, [fetchUsers]);
 
   // Handle search
-  const handleSearch = useCallback((text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setFilteredUsers(users);
-      return;
-    }
-    
-    const filtered = users.filter(user =>
-      user.username.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  }, [users]);
+  const handleSearch = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
+      if (text.trim() === "") {
+        setFilteredUsers(users);
+        return;
+      }
+
+      const filtered = users.filter((user) =>
+        user.username.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    },
+    [users]
+  );
 
   // Pull to refresh implementation
   const [refreshing, setRefreshing] = useState(false);
@@ -133,16 +148,19 @@ const MessageTab = () => {
         options={{
           headerLeft: () => (
             <TouchableOpacity style={{ marginLeft: 10 }}>
-              <Image source={backgreenarrowPath} style={{ height: 30, width: 30 }} />
+              <Image
+                source={backgreenarrowPath}
+                style={{ height: 30, width: 30 }}
+              />
             </TouchableOpacity>
           ),
-          headerTitleAlign: 'center',
-          headerTitle: 'Messages',
+          headerTitleAlign: "center",
+          headerTitle: "Messages",
           headerRight: () => (
             <TouchableOpacity style={{ marginRight: 10 }}>
-              <Image 
-                source={require("../../../assets/images/filtergreen.png")} 
-                style={{ height: 38, width: 38, objectFit: 'contain' }} 
+              <Image
+                source={require("../../../assets/images/filtergreen.png")}
+                style={{ height: 38, width: 38, objectFit: "contain" }}
               />
             </TouchableOpacity>
           ),
@@ -151,7 +169,12 @@ const MessageTab = () => {
 
       <SafeAreaView style={styles.container}>
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={20}
+            color="#888"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search Chat"
@@ -159,9 +182,9 @@ const MessageTab = () => {
             value={searchQuery}
             onChangeText={handleSearch}
           />
-          {searchQuery !== '' && (
-            <TouchableOpacity 
-              onPress={() => handleSearch('')}
+          {searchQuery !== "" && (
+            <TouchableOpacity
+              onPress={() => handleSearch("")}
               style={styles.clearButton}
             >
               <Ionicons name="close-circle" size={20} color="#888" />
@@ -172,10 +195,7 @@ const MessageTab = () => {
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity 
-              style={styles.retryButton} 
-              onPress={fetchUsers}
-            >
+            <TouchableOpacity style={styles.retryButton} onPress={fetchUsers}>
               <Text style={styles.retryText}>Retry</Text>
             </TouchableOpacity>
           </View>
@@ -195,7 +215,7 @@ const MessageTab = () => {
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>
-                  {searchQuery ? 'No users found' : 'No conversations yet'}
+                  {searchQuery ? "No users found" : "No conversations yet"}
                 </Text>
               </View>
             }
@@ -211,12 +231,12 @@ export default MessageTab;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: "white",
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
     borderRadius: 20,
     margin: 10,
     paddingHorizontal: 10,
@@ -232,78 +252,78 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   conversationItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     marginRight: 15,
   },
   conversationDetails: {
     flex: 1,
   },
   nameTimeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 5,
   },
   name: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   time: {
-    color: 'gray',
+    color: "gray",
     fontSize: 12,
   },
   message: {
-    color: 'gray',
+    color: "gray",
   },
   unreadBadge: {
-    backgroundColor: '#20B2AA',
+    backgroundColor: "#20B2AA",
     borderRadius: 10,
     width: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   unreadText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorContainer: {
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   errorText: {
-    color: 'red',
+    color: "red",
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   retryButton: {
-    backgroundColor: '#20B2AA',
+    backgroundColor: "#20B2AA",
     padding: 10,
     borderRadius: 5,
   },
   retryText: {
-    color: 'white',
+    color: "white",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   emptyText: {
-    color: 'gray',
+    color: "gray",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

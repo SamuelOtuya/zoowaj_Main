@@ -8,21 +8,11 @@ import {
 } from "react-native";
 import React from "react";
 import { useRouter } from "expo-router";
-
-interface Profile {
-  id: string;
-  image: string;
-  name: string;
-  age?: number;
-  address: string;
-  tags: string[];
-  bio?: string;
-  isLiked?: boolean;
-  isFavorite?: boolean;
-}
+import { UserProfileData } from "@/constants/types";
+import { calculateAge } from "@/utils/calculate";
 
 interface ProfileCardProps {
-  profile: Profile;
+  profile: UserProfileData;
   originalProfile: any; // Full API response for the profile
   icons: {
     reject: any;
@@ -34,12 +24,19 @@ interface ProfileCardProps {
   onReject: () => void;
 }
 
-const ProfileCard = ({ profile, originalProfile, icons, onLike, onFavorite, onReject }: ProfileCardProps) => {
+const ProfileCard = ({
+  profile,
+  originalProfile,
+  icons,
+  onLike,
+  onFavorite,
+  onReject,
+}: ProfileCardProps) => {
   const router = useRouter();
 
   const handleProfilePress = () => {
     router.push({
-      pathname: '/(main)/details',
+      pathname: "/(main)/details",
       params: { profile: JSON.stringify(originalProfile) },
     });
   };
@@ -48,19 +45,22 @@ const ProfileCard = ({ profile, originalProfile, icons, onLike, onFavorite, onRe
     <View style={styles.container}>
       <View style={styles.cardContainer}>
         <TouchableOpacity onPress={handleProfilePress}>
-          <Image 
-            source={{ uri: profile.image }} 
+          <Image
+            source={{ uri: profile.profilePhoto.url }}
             style={styles.image}
           />
         </TouchableOpacity>
         <View style={styles.infoContainer}>
           <View style={styles.textContainer}>
             <Text style={styles.nameText}>
-              {profile.name}{profile.age ? `, ${profile.age}` : ''}
+              {profile.about.username}
+              {profile.about.birthDate ? `, ${calculateAge(profile.about.birthDate)}` : ""}
             </Text>
-            <Text style={styles.locationText}>{profile.address}</Text>
+            <Text style={styles.locationText}>
+              {profile.about.maritalStatus}
+            </Text>
             <View style={styles.tagsContainer}>
-              {profile.tags.map((tag, index) => (
+              {profile.interests.map((tag, index) => (
                 <Text key={index} style={styles.tagText}>
                   {tag}
                 </Text>
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     height: 400,
     width: "100%",
     borderRadius: 26,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
   },
   infoContainer: {
     position: "absolute",

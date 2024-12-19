@@ -122,3 +122,24 @@ export const fetchAuthenticatedUserData = createAsyncThunk<
     );
   }
 });
+
+// Fetch User PRofiles from Api
+export const fetchUserProfilesFromAPI = createAsyncThunk<
+  UserProfileData[],
+  void // No parameters needed for this function
+>("auth/users/fetchUserProfiles", async (_, thunkAPI) => {
+  console.log("fetching User Profiles from APi");
+  try {
+    const token = await AsyncStorage.getItem("bearerToken");
+    if (!token) return thunkAPI.rejectWithValue("No token found");
+    setAuthToken(token);
+    const response = await API.get(`user/profiles`);
+    console.log("USER Profiles FROM API:", response.data);
+    return response.data as UserProfileData[]; // Ensure backend returns user data in expected format
+  } catch (error: any) {
+    console.error("Failed to fetch User Profiles:", error);
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || "Failed to fetch user profiles"
+    );
+  }
+});

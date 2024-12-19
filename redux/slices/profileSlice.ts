@@ -5,6 +5,7 @@ import {
   fetchProfileDataFormStorage,
   createProfileImagesService,
   fetchAuthenticatedUserData,
+  fetchUserProfilesFromAPI,
 } from "../services/profileService";
 import { UserProfileData } from "@/constants/types";
 import { UserProfile } from "@/constants/models/userProfile.model";
@@ -12,6 +13,7 @@ import { UserProfile } from "@/constants/models/userProfile.model";
 interface ProfileState {
   data: Record<string, any> | null;
   authUser: UserProfileData | null; // Change type to UserProfileData
+  appProfiles: UserProfileData[];
   error: string | null;
   loading: boolean;
 }
@@ -19,6 +21,7 @@ interface ProfileState {
 const initialState: ProfileState = {
   data: null,
   authUser: null,
+  appProfiles: [],
   error: null,
   loading: false,
 };
@@ -60,6 +63,7 @@ const profileSlice = createSlice({
 
   extraReducers(builder) {
     builder
+      //Update Profile Details
       .addCase(updateProfileDetailsService.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -77,6 +81,8 @@ const profileSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || "Profile Update Failed";
       })
+
+      //Fetch Auth User Data from API
       .addCase(fetchAuthenticatedUserData.pending, (state) => {
         state.loading = true;
       })
@@ -98,6 +104,28 @@ const profileSlice = createSlice({
         state.loading = false;
         state.error =
           action.error.message || "Failed to fetch authenticated user data";
+      })
+
+      // In your reducer file where you handle actions
+      .addCase(fetchUserProfilesFromAPI.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchUserProfilesFromAPI.fulfilled, (state, action) => {
+        state.loading = false;
+
+        if (action.payload && action.payload.length > 0) {
+          state.appProfiles = action.payload.map((profile) => {
+            const userProfile = UserProfile.fromJSON(profile);
+            return userProfile.toJSON();
+          }); // Convert each UserProfile instance back to JSON if needed
+        } else {
+          state.appProfiles = [];
+          state.error = "User Data Unavailable";
+        }
+      })
+      .addCase(fetchUserProfilesFromAPI.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch User profiles";
       });
   },
 });

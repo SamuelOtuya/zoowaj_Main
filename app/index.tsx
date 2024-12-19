@@ -18,7 +18,7 @@ const SplashScreen = () => {
   const dispatch = useAppDispatch();
 
   // Redux state
-  const { user, login, isLoading } = useAppSelector((state) => state.auth);
+  const { user, isLoading } = useAppSelector((state) => state.auth);
   const { authUser, loading } = useAppSelector((state) => state.profile);
 
   // Local state for managing loading status

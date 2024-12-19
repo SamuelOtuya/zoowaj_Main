@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import rootReducer from "./rootReducer"; // Ensure this imports your combined reducers
+import { socketMiddleware } from "@/middleware/socket.middleware";
 
 // Persist config for Redux store
 const persistConfig = {
@@ -28,7 +29,7 @@ export const store = configureStore({
           "persist/REGISTER",
         ],
       },
-    }),
+    }).concat(socketMiddleware),
 });
 
 // Set up persistence

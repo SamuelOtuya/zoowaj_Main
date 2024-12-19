@@ -8,123 +8,60 @@ import {
   Text,
   RefreshControl,
 } from "react-native";
-import { useNavigation } from "expo-router";
 import ProfileCard from "../../../components/ProfileCard";
 import API from "@/api/api";
-import { fetchAuthenticatedUserData } from "@/redux/services/profileService";
-import { useAppDispatch } from "@/redux/hooks/redux-hooks";
-
-interface Profile {
-  id: string;
-  image: string;
-  name: string;
-  address: string;
-  tags: string[];
-  age?: number;
-  bio?: string;
-  isLiked?: boolean;
-  isFavorite?: boolean;
-}
-
-interface ApiProfile {
-  _id: string;
-  profilePhoto: {
-    url: string;
-  };
-  about: {
-    first_name: string;
-    last_name: string;
-    birthDate: string;
-    maritalStatus: string;
-  };
-  marriageIntentions: {
-    wantsChildren: string;
-  };
-  languageAndEthnicity: {
-    ethnicOrigin: string;
-    biography: string;
-  };
-  educationAndCareer: {
-    profession: string;
-  };
-  likes: string[];
-  favorites: string[];
-}
+import {
+  fetchAuthenticatedUserData,
+  fetchUserProfilesFromAPI,
+} from "@/redux/services/profileService";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
+import { UserProfileData } from "@/constants/types";
 
 const HomeScreen = () => {
-  const [profiles, setProfiles] = useState<ApiProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<UserProfileData[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<string>("");
-  const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
   const reject = require("../../../assets/images/reject.png");
   const match = require("../../../assets/images/match.png");
   const stared = require("../../../assets/images/stared.png");
 
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
+  const { appProfiles, loading, error } = useAppSelector(
+    (state) => state.profile
+  );
+  const { user } = useAppSelector((state) => state.auth);
 
-  const transformProfile = (profile: ApiProfile): Profile => ({
-    id: profile._id,
-    image: profile.profilePhoto.url,
-    name: `${profile.about.first_name} ${profile.about.last_name}`,
-    address: profile.languageAndEthnicity.ethnicOrigin,
-    tags: [
-      profile.about.maritalStatus,
-      profile.marriageIntentions.wantsChildren === "Yes" ? "Wants Children" : "Doesn't Want Children",
-      profile.educationAndCareer.profession,
-    ],
-    age: calculateAge(profile.about.birthDate),
-    bio: profile.languageAndEthnicity.biography,
-    isLiked: profile.likes?.includes(userId),
-    isFavorite: profile.favorites?.includes(userId),
-  });
-
-  const fetchProfiles = async () => {
-    try {
-      setError(null);
-      const response = await API.get("/dev/data");
-      console.log('Number of profiles in response:', response.data.length);
-      setProfiles(response.data);
-    } catch (err) {
-      setError("Failed to load profiles. Please try again.");
-      console.error("Error fetching profiles:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  // Update profiles whenever appProfiles changes
 
   const fetchUserData = async () => {
     try {
-      const userData = await dispatch(fetchAuthenticatedUserData());
-      setUserId(userData.payload?.id || "");
+      await dispatch(fetchAuthenticatedUserData());
     } catch (err) {
       console.error("Error fetching user data:", err);
     }
   };
 
+  const fetchUserProfiles = async () => {
+    setRefreshing(true);
+    try {
+      await dispatch(fetchUserProfilesFromAPI());
+    } catch (err) {
+      console.error("Error fetching user profiles:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     fetchUserData();
-    fetchProfiles();
+    fetchUserProfiles();
+    setProfiles(appProfiles);
+    setUserId(user?.id);
   }, []);
 
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchProfiles();
+    fetchUserProfiles();
   };
 
   const handleLike = async (profileId: string) => {
@@ -132,7 +69,7 @@ const HomeScreen = () => {
       await API.post(`/users/like/${profileId}`);
       setProfiles((prevProfiles) =>
         prevProfiles.map((profile) =>
-          profile._id === profileId 
+          profile.userId === profileId
             ? { ...profile, likes: [...(profile.likes || []), userId] }
             : profile
         )
@@ -148,12 +85,12 @@ const HomeScreen = () => {
       await API.post(`/users/favorite/${profileId}`);
       setProfiles((prevProfiles) =>
         prevProfiles.map((profile) =>
-          profile._id === profileId
+          profile.userId === profileId
             ? {
                 ...profile,
                 favorites: profile.favorites?.includes(userId)
-                  ? profile.favorites.filter(id => id !== userId)
-                  : [...(profile.favorites || []), userId]
+                  ? profile.favorites.filter((id) => id !== userId)
+                  : [...(profile.favorites || []), userId],
               }
             : profile
         )
@@ -168,7 +105,7 @@ const HomeScreen = () => {
     try {
       await API.post(`/users/reject/${profileId}`);
       setProfiles((prevProfiles) =>
-        prevProfiles.filter((profile) => profile._id !== profileId)
+        prevProfiles.filter((profile) => profile.userId !== profileId)
       );
     } catch (err) {
       console.error("Error rejecting profile:", err);
@@ -188,7 +125,10 @@ const HomeScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchProfiles}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={fetchUserProfiles}
+        >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -200,19 +140,19 @@ const HomeScreen = () => {
       <Text style={styles.countText}>Total Profiles: {profiles.length}</Text>
       <FlatList
         data={profiles}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
+        keyExtractor={(item) => item.userId}
+        renderItem={({ item }: { item: UserProfileData }) => (
           <ProfileCard
-            profile={transformProfile(item)}
+            profile={item}
             originalProfile={item}
             icons={{
               reject,
               match,
               stared,
             }}
-            onLike={() => handleLike(item._id)}
-            onFavorite={() => handleFavorite(item._id)}
-            onReject={() => handleReject(item._id)}
+            onLike={() => handleLike(item.userId)}
+            onFavorite={() => handleFavorite(item.userId)}
+            onReject={() => handleReject(item.userId)}
           />
         )}
         contentContainerStyle={styles.contentContainer}
@@ -273,8 +213,8 @@ const styles = StyleSheet.create({
   },
   countText: {
     padding: 10,
-    backgroundColor: '#f0f0f0',
-    textAlign: 'center',
+    backgroundColor: "#f0f0f0",
+    textAlign: "center",
   },
 });
 

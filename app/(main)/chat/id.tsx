@@ -13,21 +13,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import API from "@/api/api";
-import { findNonSerializableValue } from "@reduxjs/toolkit";
+import { messageData } from "@/constants/types";
 
-interface Message {
-  _id: string;
-  message: string;
-  sender?: string;
-  recipient: string;
-  createdAt: string;
-  read: boolean;
-}
 const socket = io("https://social-smart-raven.ngrok-free.app:8000");
 const ChatScreen = () => {
   const params = useLocalSearchParams();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<messageData[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const flatListRef = useRef<FlatList>(null);
@@ -49,50 +40,25 @@ const ChatScreen = () => {
     };
   }, [recipientId]);
 
-  // const fetchMessages = async () => {
-  //   try {
-  //     // Using both senderId and recipientId in the URL
-  //     const senderId = "your-user-id"; // Replace with actual user ID
-  //     const response = await API.get(`/message/get/${senderId}/${recipientId}`);
-
-  //     // From your Postman response, it looks like the messages array is directly in the response
-  //     // not nested under a 'messages' property
-  //     if (response.data) {
-  //       setMessages(response.data);
-  //     }
-  //     setLoading(false);
-  //   } catch (error) {
-  //     console.error("Error fetching messages:", error);
-  //     setLoading(false);
-  //   }
-  // };
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
 
     try {
       const messageData = {
-        userId: "your-user-id", // Replace with actual user ID from your auth system
+        userId: "your-user-id",
         recipient: recipientId,
         message: newMessage.trim(),
       };
 
       socket.emit("chat message", { recipientId, newMessage });
-
-      // const response = await API.post("/message", messageData);
-
-      // if (response.data) {
-      //   setMessages((prev) => [...prev, response.data]);
-      //   setNewMessage("");
-      //   flatListRef.current?.scrollToEnd();
-      // }
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send message. Please try again.");
     }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
-    const isMyMessage = item.sender === "your-user-id"; // Replace with actual user ID comparison
+  const renderMessage = ({ item }: { item: messageData }) => {
+    const isMyMessage = item.senderId === "your-user-id"; // Replace with actual user ID comparison
 
     return (
       <View
@@ -102,7 +68,7 @@ const ChatScreen = () => {
         ]}
       >
         <Text style={[styles.messageText, !isMyMessage && { color: "#000" }]}>
-          {item.message}
+          {item.text}
         </Text>
         <Text
           style={[
@@ -142,7 +108,7 @@ const ChatScreen = () => {
         ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.messagesList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
         inverted={false}

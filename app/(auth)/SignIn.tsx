@@ -14,15 +14,12 @@ import { loginUser } from "@/redux/services/authService";
 import { useRouter } from "expo-router";
 import Button from "../../components/Button";
 import { fetchAuthenticatedUserData } from "@/redux/services/profileService";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Auth() {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const { isLoading, error, login, user } = useAppSelector(
-    (state) => state.auth
-  );
+  const { isLoading, error } = useAppSelector((state) => state.auth);
   const { authUser, loading } = useAppSelector((state) => state.profile);
 
   const [email, setEmail] = useState("");
@@ -59,27 +56,16 @@ export default function Auth() {
       const loginResponse = await dispatch(loginUser(userData));
 
       if (loginResponse.meta.requestStatus === "fulfilled") {
-        // Check for user profile data in AsyncStorage
-        const storedProfileData = await AsyncStorage.getItem("authUser"); // Adjust key as necessary
-        const parsedProfileData = storedProfileData
-          ? JSON.parse(storedProfileData)
-          : null;
-
-        if (parsedProfileData && Object.keys(parsedProfileData).length > 0) {
-          // Navigate to home if profile data is found
-          router.replace("/(main)/tabs/home");
-        } else {
-          // Fetch user data from API if no profile data found
-          await dispatch(fetchAuthenticatedUserData()).then((fetchResponse) => {
-            if (fetchResponse.meta.requestStatus === "fulfilled") {
-              // Navigate to home after successful fetch
-              router.replace("/(main)/tabs/home");
-            } else {
-              // Navigate to step one if fetching fails
-              router.replace("/(profile-details)/step-1");
-            }
-          });
-        }
+        // Fetch user data from API if no profile data found
+        await dispatch(fetchAuthenticatedUserData()).then((fetchResponse) => {
+          if (fetchResponse.meta.requestStatus === "fulfilled") {
+            // Navigate to home after successful fetch
+            router.replace("/(main)/tabs/home");
+          } else {
+            // Navigate to step one if fetching fails
+            router.replace("/(profile-details)/step-1");
+          }
+        });
       }
 
       if (error) {

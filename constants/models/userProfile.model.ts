@@ -11,33 +11,33 @@ export class UserProfile implements UserProfileData {
     first_name: string;
     last_name: string;
     username: string;
-    phone_number?: string;
-    birthDate?: Date; // Keep as Date type
-    height?: string;
-    maritalStatus?: string;
-    tagline?: string;
+    phone_number: string;
+    birthDate: Date;
+    height: string;
+    maritalStatus: string;
+    tagline: string;
   };
   religiosity: {
-    muslimSect?: string;
-    isConvert?: boolean;
-    religiousPractice?: string;
-    doYouPray?: string;
-    diet?: string;
-    doYouSmoke?: boolean;
-    hasTattoos?: boolean;
+    muslimSect: string;
+    isConvert: boolean;
+    religiousPractice: string;
+    doYouPray: string;
+    diet: string;
+    doYouSmoke: boolean;
+    hasTattoos: boolean;
   };
   marriageIntentions: {
-    lookingToMarry?: string;
-    willingToRelocate?: boolean;
-    wantsChildren?: boolean;
-    livingArrangements?: string;
-    iceBreaker?: string;
+    lookingToMarry: string;
+    willingToRelocate: boolean;
+    wantsChildren: boolean;
+    livingArrangements: string;
+    iceBreaker: string;
   };
   languageAndEthnicity: {
     languages: string[];
     ethnicGroup: string;
     ethnicOrigin: string;
-    biography?: string;
+    biography: string;
   };
   educationAndCareer: {
     profession: string;
@@ -48,8 +48,8 @@ export class UserProfile implements UserProfileData {
   likes: any[];
   favorites: any[];
   coverPhotos: any[];
-  createdAt: Date; // Keep as Date type
-  updatedAt: Date; // Keep as Date type
+  createdAt: Date;
+  updatedAt: Date;
 
   constructor(data: UserProfileData) {
     this.userId = data.userId;
@@ -58,9 +58,9 @@ export class UserProfile implements UserProfileData {
     this.about = {
       ...data.about,
       birthDate:
-        typeof data.about?.birthDate === "string"
+        typeof data.about.birthDate === "string"
           ? new Date(data.about.birthDate)
-          : data.about?.birthDate,
+          : data.about.birthDate,
     };
 
     this.religiosity = data.religiosity || {};
@@ -89,13 +89,16 @@ export class UserProfile implements UserProfileData {
       profilePhoto: this.profilePhoto,
       about: {
         ...this.about,
-        birthDate: this.about.birthDate
-          ? this.about.birthDate.toISOString()
-          : undefined,
+        birthDate: this.about.birthDate.toISOString(),
       },
       religiosity: this.religiosity,
       marriageIntentions: this.marriageIntentions,
-      languageAndEthnicity: this.languageAndEthnicity,
+      languageAndEthnicity: {
+        ...this.languageAndEthnicity,
+        languages: Array.isArray(this.languageAndEthnicity.languages)
+          ? this.languageAndEthnicity.languages
+          : [], // Default to an empty array if not already an array
+      },
       educationAndCareer: this.educationAndCareer,
       interests: this.interests,
       likes: this.likes,
@@ -114,9 +117,9 @@ export class UserProfile implements UserProfileData {
       about: {
         ...data.about,
         birthDate:
-          typeof data.about?.birthDate === "string"
+          typeof data.about.birthDate === "string"
             ? new Date(data.about.birthDate)
-            : data.about?.birthDate,
+            : data.about.birthDate,
       },
     });
   }

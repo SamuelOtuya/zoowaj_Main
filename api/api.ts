@@ -3,7 +3,7 @@ import axios from "axios";
 export const Url1 = "https://capital-obviously-terrier.ngrok-free.app/api/v1";
 export const Url2 = "https://social-smart-raven.ngrok-free.app/api/v1";
 
-export const baseURL = Url2;
+export const baseURL = Url1;
 
 const API = axios.create({
   baseURL: baseURL,
