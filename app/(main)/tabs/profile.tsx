@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  TextInput,
-  Alert,
   StyleSheet,
   TouchableOpacity,
   Text,
   ScrollView,
-  ActivityIndicator,
   SafeAreaView,
   Image,
   Switch,
@@ -20,9 +17,6 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
 import { logout as logoutAction } from "@/redux/slices/authSlice";
-import { UserProfile } from "@/constants/models/userProfile.model";
-
-const API_ENDPOINT = "https://your-api-endpoint.com/api"; // Replace with your API endpoint
 
 const ProfileScreen: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -32,30 +26,26 @@ const ProfileScreen: React.FC = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  // Select authUser data from Redux store
   const profileDetails = useAppSelector((state) => state.profile.authUser);
 
-  // Update local state when profileDetails changes
   useEffect(() => {
     if (profileDetails) {
-      setProfileImage(profileDetails.profilePhoto.url || null);
-      setBannerImage(profileDetails.coverPhotos[0]?.url || null);
+      setProfileImage(profileDetails.profilePhoto?.url || null);
+      setBannerImage(profileDetails.coverPhotos?.[0]?.url || null);
     }
   }, [profileDetails]);
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.clear(); // Clear local storage
-      dispatch(logoutAction()); // Dispatch Redux logout action
-      console.log("Logout successful");
-      router.replace("/SignIn"); // Redirect to SignIn page
+      await AsyncStorage.clear();
+      dispatch(logoutAction());
+      router.replace("/SignIn");
       Toast.show({
         type: "success",
         text1: "Logged Out",
         text2: "You have successfully logged out.",
       });
     } catch (error) {
-      console.error("Logout failed:", error);
       Toast.show({
         type: "error",
         text1: "Logout Error",
@@ -87,21 +77,23 @@ const ProfileScreen: React.FC = () => {
           <TouchableOpacity onPress={() => pickImage(setBannerImage)}>
             <Image
               source={{ uri: bannerImage || undefined }}
-              style={[styles.bannerImage]}
+              style={styles.bannerImage}
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => pickImage(setProfileImage)}>
-            <Image
-              source={{ uri: profileImage || undefined }}
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
-          <View style={styles.profileInfo}>
+          <View style={styles.profileImageContainer}>
+            <TouchableOpacity onPress={() => pickImage(setProfileImage)}>
+              <Image
+                source={{ uri: profileImage || undefined }}
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.profileSection}>
             <Text style={styles.name}>
-              {profileDetails?.about.username || "Loading..."}
+              {profileDetails?.about?.username || "Your Name"}
             </Text>
-            <Text style={styles.location}>
-              {profileDetails?.about.phone_number || "Loading..."}
+            <Text style={styles.phoneNumber}>
+              {profileDetails?.about?.phone_number || "Your Phone Number"}
             </Text>
           </View>
           <View style={styles.settingsSection}>
@@ -132,11 +124,10 @@ const styles = StyleSheet.create({
   bannerImage: {
     height: 200,
     width: "100%",
-    marginBottom: -50,
   },
-  profileInfo: {
+  profileImageContainer: {
     alignItems: "center",
-    marginTop: -50,
+    marginTop: -50, // To overlap the banner image
   },
   profileImage: {
     width: 100,
@@ -144,15 +135,21 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 3,
     borderColor: "#fff",
-    marginBottom: -50,
-    marginTop: -20,
+    marginBottom: 20,
+  },
+  profileSection: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    margin: 10,
+    alignItems: "center",
   },
   name: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "bold",
     marginTop: 10,
   },
-  location: {
+  phoneNumber: {
     fontSize: 16,
     color: "#666",
     marginTop: 5,
@@ -162,11 +159,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     marginHorizontal: 10,
+    paddingVertical: 10,
   },
   settingItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
+    paddingHorizontal: 10,
   },
   settingText: {
     flex: 1,

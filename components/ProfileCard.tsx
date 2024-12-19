@@ -9,53 +9,80 @@ import {
 import React from "react";
 import { useRouter } from "expo-router";
 
-const { width } = Dimensions.get("window");
+interface Profile {
+  id: string;
+  image: string;
+  name: string;
+  age?: number;
+  address: string;
+  tags: string[];
+  bio?: string;
+  isLiked?: boolean;
+  isFavorite?: boolean;
+}
 
-const ProfileCard = ({ profile }: { profile: any }) => {
+interface ProfileCardProps {
+  profile: Profile;
+  originalProfile: any; // Full API response for the profile
+  icons: {
+    reject: any;
+    match: any;
+    stared: any;
+  };
+  onLike: () => void;
+  onFavorite: () => void;
+  onReject: () => void;
+}
+
+const ProfileCard = ({ profile, originalProfile, icons, onLike, onFavorite, onReject }: ProfileCardProps) => {
   const router = useRouter();
 
   const handleProfilePress = () => {
     router.push({
       pathname: '/(main)/details',
-      params: { profile: JSON.stringify(profile) },
+      params: { profile: JSON.stringify(originalProfile) },
     });
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.cardContainer}>
         <TouchableOpacity onPress={handleProfilePress}>
-          <Image source={profile.image} style={styles.image} />
+          <Image 
+            source={{ uri: profile.image }} 
+            style={styles.image}
+          />
         </TouchableOpacity>
         <View style={styles.infoContainer}>
           <View style={styles.textContainer}>
-            <Text style={styles.nameText}>Anita Fritsch, 21</Text>
-            <Text style={styles.locationText}>Cape Town, Afrika</Text>
+            <Text style={styles.nameText}>
+              {profile.name}{profile.age ? `, ${profile.age}` : ''}
+            </Text>
+            <Text style={styles.locationText}>{profile.address}</Text>
             <View style={styles.tagsContainer}>
-              {profile.tags.map((item, index) => (
+              {profile.tags.map((tag, index) => (
                 <Text key={index} style={styles.tagText}>
-                  {item}
+                  {tag}
                 </Text>
               ))}
             </View>
           </View>
         </View>
         <View style={styles.iconsContainer}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={profile.rejectIcon} style={styles.icon} />
+          <TouchableOpacity style={styles.iconButton} onPress={onReject}>
+            <Image source={icons.reject} style={styles.icon} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={profile.matchIcon} style={styles.icon} />
+          <TouchableOpacity style={styles.iconButton} onPress={onLike}>
+            <Image source={icons.match} style={styles.icon} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Image source={profile.staredIcon} style={styles.icon} />
+          <TouchableOpacity style={styles.iconButton} onPress={onFavorite}>
+            <Image source={icons.stared} style={styles.icon} />
           </TouchableOpacity>
         </View>
       </View>
     </View>
   );
 };
-
-export default ProfileCard;
 
 const styles = StyleSheet.create({
   container: {
@@ -72,6 +99,7 @@ const styles = StyleSheet.create({
     height: 400,
     width: "100%",
     borderRadius: 26,
+    backgroundColor: '#f0f0f0',
   },
   infoContainer: {
     position: "absolute",
@@ -122,12 +150,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   iconButton: {
-    // width: 56,
-    // height: 56,
-    // marginHorizontal: 15,
-    // justifyContent: 'center',
-    // alignItems: 'center',
-    // elevation: 5, // This will give a raised effect on Android
+    padding: 10,
   },
   icon: {
     width: 56,
@@ -137,3 +160,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
   },
 });
+
+export default ProfileCard;
