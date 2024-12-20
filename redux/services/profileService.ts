@@ -59,7 +59,7 @@ export const createProfileImagesService = createAsyncThunk<
       return thunkAPI.rejectWithValue("No token found");
     }
 
-    const response = await fetch(`${baseURL}/user/profile-images`, {
+    const response = await fetch(`${baseURL}/api/v1/user/profile-images`, {
       method: "POST",
       headers: {
         "Content-Type": "multipart/form-data", // Not necessary but can be included

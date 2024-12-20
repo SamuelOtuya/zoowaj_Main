@@ -14,8 +14,10 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { GiftedChat, IMessage } from "react-native-gifted-chat";
-import { messageData } from "@/constants/types";
+import { messageData, UserProfileData } from "@/constants/types";
 import { baseURL } from "@/api/api";
+import { UserProfile } from "@/constants/models/userProfile.model";
+import { Message } from "@/constants/models/message.model";
 
 const ChatScreen: React.FC = () => {
   const params = useLocalSearchParams();
@@ -24,9 +26,18 @@ const ChatScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
 
-  const recipientId = params.recipientId as string;
-  const recipientName = params.recipientName as string;
-  const recipientPhoto = params.recipientPhoto as string;
+  const sneakyLink: UserProfileData = UserProfile.fromJSON(
+    JSON.parse(params.profile as string)
+  );
+
+  const recipientId = sneakyLink.userId; // params.recipientId as string;
+  const recipientName = sneakyLink.about.username; // params.recipientName as string;
+  const recipientPhoto = sneakyLink.profilePhoto.url; // params.recipientPhoto as string;
+
+  if (!recipientId || !recipientName || !recipientPhoto) {
+    console.error("Missing recipient details");
+    return;
+  }
 
   const initializeSocket = async () => {
     try {
@@ -51,26 +62,47 @@ const ChatScreen: React.FC = () => {
         console.log("Socket disconnected:", reason);
       });
 
-      // Handle 'load chat' messages
-      newSocket.on("load chat", (texts: messageData[] | null) => {
-        if (!texts || texts.length === 0) {
-          console.log("No messages found, initializing empty chat.");
-          setTexts([]);
-        } else {
-          const formattedMessages = texts.map((text) => ({
-            _id: text.id,
-            text: text.text,
-            createdAt: new Date(text.createdAt),
-            user: {
-              _id:
-                text.senderId === "your-user-id" ? "your-user-id" : recipientId,
-              name: text.senderId === "your-user-id" ? "You" : recipientName,
-              avatar: recipientPhoto,
-            },
-          }));
-          setTexts(formattedMessages);
+      newSocket.emit("load chat", recipientId);
+
+      newSocket.on("load chat", async (texts: messageData[] | null) => {
+        try {
+          console.log("Received texts:", texts); // Add this line to check the incoming data
+
+          if (!texts || texts.length === 0) {
+            console.log("No messages found, initializing empty chat.");
+            setTexts([]);
+          } else {
+            const data: messageData[] = texts.map((text) => {
+              const message = Message.fromJSON(text);
+              console.log("Deserialized message:", message); // Check if message is deserialized correctly
+
+              return message;
+            });
+
+            const formattedMessages: IMessage[] = data.map((text) => ({
+              _id: text.id.toString(),
+              text: text.text,
+              createdAt: new Date(text.createdAt), // Ensure createdAt is a Date object
+              user: {
+                _id:
+                  text.senderId === "your-user-id"
+                    ? "your-user-id"
+                    : recipientId, // Ensure recipientId is defined
+                name: text.senderId === "your-user-id" ? "You" : recipientName,
+                avatar: recipientPhoto, // Ensure recipientPhoto is defined
+              },
+            }));
+
+            console.log("Formatted messages:", formattedMessages); // Check formatted messages
+
+            setTexts(formattedMessages); // Update state with formatted messages
+          }
+        } catch (error) {
+          console.error("Error processing chat messages:", error);
+          alert("Failed to load messages. Please try again.");
+        } finally {
+          setLoading(false); // Mark loading as complete
         }
-        setLoading(false);
       });
 
       setSocket(newSocket);
@@ -94,7 +126,7 @@ const ChatScreen: React.FC = () => {
     if (!socket || !newMessages.length) return;
 
     try {
-      socket.emit("send text", { recipientId, message: newMessages[0].text });
+      socket.emit("send text", { recipientId, text: newMessages[0].text });
       setTexts((previousMessages) =>
         GiftedChat.append(previousMessages, newMessages)
       );
@@ -145,7 +177,14 @@ const ChatScreen: React.FC = () => {
                 !newMessage.trim() && styles.sendButtonDisabled,
               ]}
               onPress={() =>
-                onSend([{ text: newMessage, user: { _id: "your-user-id" } }])
+                onSend([
+                  {
+                    _id: `${Date.now()}`,
+                    text: newMessage,
+                    user: { _id: "your-user-id" },
+                    createdAt: Date.now(),
+                  },
+                ])
               }
               disabled={!newMessage.trim()}
             >

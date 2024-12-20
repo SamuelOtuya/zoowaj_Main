@@ -31,14 +31,22 @@ const ProfileDetailsScreen = () => {
     );
   }
 
+  // const handleProfilePress = () => {
+  //   router.push({
+  //     pathname: "/(main)/details",
+  //     params: { profile: JSON.stringify(originalProfile) },
+  //   });
+  // };
+
   const handleMessagePress = () => {
     router.push({
       pathname: "/(main)/chat/id",
-      params: {
-        recipientId: profile.userId,
-        recipientName: `${profile.about.first_name} ${profile.about.last_name}`,
-        recipientPhoto: profile.profilePhoto?.url,
-      },
+      params: { profile: JSON.stringify(profile) },
+      // params: {
+      //   recipientId: profile.userId,
+      //   recipientName: `${profile.about.first_name} ${profile.about.last_name}`,
+      //   recipientPhoto: profile.profilePhoto?.url,
+      // },
     });
   };
 

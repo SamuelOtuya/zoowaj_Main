@@ -17,7 +17,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
       onPress={() =>
         router.push({
           pathname: "/(main)/chat/id",
-          params: { id: item.userId },
+          params: { profile: JSON.stringify(item) },
         })
       }
     >
