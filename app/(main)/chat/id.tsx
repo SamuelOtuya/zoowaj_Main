@@ -1,4 +1,4 @@
-import io from "socket.io-client";
+import io, { Socket } from "socket.io-client";
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -12,45 +12,76 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { messageData } from "@/constants/types";
 
-const socket = io("https://social-smart-raven.ngrok-free.app:8000");
-const ChatScreen = () => {
+const ChatScreen: React.FC = () => {
   const params = useLocalSearchParams();
-  const [messages, setMessages] = useState<messageData[]>([]);
+  const [texts, setTexts] = useState<messageData[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const flatListRef = useRef<FlatList>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const flatListRef = useRef<FlatList<messageData>>(null);
 
   const recipientId = params.recipientId as string;
   const recipientName = params.recipientName as string;
   const recipientPhoto = params.recipientPhoto as string;
 
+  // Initialize socket with token
+  const initializeSocket = async () => {
+    try {
+      const token = await AsyncStorage.getItem("bearerToken");
+      if (!token) {
+        throw new Error("Token not found");
+      }
+
+      // Connect to socket with token in query parameters
+      const newSocket = io("https://capital-obviously-terrier.ngrok-free.app", {
+        query: { token },
+      });
+
+      // Log connection events
+      newSocket.on("connect", () => {
+        console.log("Socket connected:", newSocket.id);
+      });
+
+      newSocket.on("connect_error", (error) => {
+        console.error("Socket connection error:", error);
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        console.log("Socket disconnected:", reason);
+      });
+
+      // Listen for incoming messages
+      newSocket.on("load chat", (texts: messageData[]) => {
+        setTexts(texts);
+        setLoading(false); // Mark loading as complete
+      });
+
+      setSocket(newSocket);
+    } catch (error) {
+      console.error("Error initializing socket:", error);
+    }
+  };
+
   useEffect(() => {
-    socket.on("load message", (messages) => {
-      console.log("fetching images using sockets");
-      console.log(`retrieved ${messages.length} messages`);
-      console.log(JSON.stringify(messages, null, 2));
-      setMessages(messages);
-    });
+    initializeSocket();
+
     return () => {
-      // clearInterval(interval)
-      socket.off("load message");
+      if (socket) {
+        socket.disconnect(); // Clean up on unmount
+      }
     };
   }, [recipientId]);
 
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+  const sendMessage = () => {
+    if (!newMessage.trim() || !socket) return;
 
     try {
-      const messageData = {
-        userId: "your-user-id",
-        recipient: recipientId,
-        message: newMessage.trim(),
-      };
-
-      socket.emit("chat message", { recipientId, newMessage });
+      socket.emit("send text", { recipientId, message: newMessage }); // Send the message
+      setNewMessage(""); // Clear input after sending
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send message. Please try again.");
@@ -106,9 +137,9 @@ const ChatScreen = () => {
 
       <FlatList
         ref={flatListRef}
-        data={messages}
+        data={texts}
         renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()} // Ensure this is a string
         contentContainerStyle={styles.messagesList}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
         inverted={false}
@@ -137,6 +168,8 @@ const ChatScreen = () => {
     </KeyboardAvoidingView>
   );
 };
+
+export default ChatScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -245,5 +278,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-export default ChatScreen;

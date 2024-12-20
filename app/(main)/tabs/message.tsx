@@ -12,73 +12,14 @@ import {
 import React, { useEffect, useState, useCallback } from "react";
 import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import API from "@/api/api";
-
-// Define types for better type safety
-interface User {
-  id: string;
-  username: string;
-  profilePicture: string;
-  lastMessage?: string;
-  lastMessageTime?: string;
-  unreadCount?: number;
-}
-
-interface ConversationItemProps {
-  item: User;
-}
-
-const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
-  const router = useRouter();
-  const defaultAvatarPath = require("../../../assets/images/profile.png");
-
-  return (
-    <TouchableOpacity
-      style={styles.conversationItem}
-      onPress={() =>
-        router.push({
-          pathname: "/(main)/chat/id",
-          params: { id: item.id },
-        })
-      }
-    >
-      {item.profilePicture ? (
-        <Image
-          source={{ uri: item.profilePicture }}
-          style={styles.avatar}
-          defaultSource={defaultAvatarPath}
-        />
-      ) : (
-        <View style={styles.avatar} />
-      )}
-
-      <View style={styles.conversationDetails}>
-        <View style={styles.nameTimeContainer}>
-          <Text style={styles.name}>{item.username}</Text>
-          {item.lastMessageTime && (
-            <Text style={styles.time}>{item.lastMessageTime}</Text>
-          )}
-        </View>
-        {item.lastMessage && (
-          <Text style={styles.message} numberOfLines={1}>
-            {item.lastMessage}
-          </Text>
-        )}
-      </View>
-
-      {item.unreadCount && item.unreadCount > 0 && (
-        <View style={styles.unreadBadge}>
-          <Text style={styles.unreadText}>{item.unreadCount}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-};
+import { UserProfileData } from "@/constants/types";
+import { UserProfile } from "@/constants/models/userProfile.model";
+import { ConversationItem } from "@/components/conversationItem";
 
 const MessageTab = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserProfileData[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserProfileData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,32 +27,52 @@ const MessageTab = () => {
 
   // Fetch users from API
   const fetchUsers = useCallback(async () => {
+    setLoading(true); // Start loading
+    setError(null); // Reset error state
+
     try {
-      setLoading(true);
-      setError(null);
+      const response = await API.get("/user/profiles");
+      let data;
 
-      const response = await API.get("/users"); // Adjust endpoint as needed
-      const userData = response.data;
+      // Check if the response is valid JSON
+      if (typeof response.data === "string") {
+        // Attempt to parse if it's a string
+        try {
+          data = JSON.parse(response.data);
+        } catch (parseError) {
+          setError("Failed to parse API response.");
+          console.error("Parse Error:", parseError);
+          return; // Exit if parsing fails
+        }
+      } else {
+        data = response.data; // Already an object
+      }
 
-      // Transform API response if needed
-      const transformedUsers: User[] = userData.map((user: any) => ({
-        id: user.id,
-        username: user.username,
-        profilePicture: user.profile_picture,
-        lastMessage: user.last_message,
-        lastMessageTime: user.last_message_time,
-        unreadCount: user.unread_count,
-      }));
+      // Transform user data if needed
+      const transformedUsers: UserProfileData[] = data.map((user: any) =>
+        UserProfile.fromJSON(user)
+      );
 
+      // Update state with transformed users
       setUsers(transformedUsers);
       setFilteredUsers(transformedUsers);
-    } catch (err) {
-      setError("Failed to fetch users. Please try again later.");
-      console.error("Error fetching users:", err);
+    } catch (err: any) {
+      if (err.response) {
+        // Server responded with a status different from 2xx
+        setError(
+          `Error: ${err.response.data.message || "Something went wrong"}`
+        );
+      } else if (err.request) {
+        // Request was made but no response received
+        setError("Network error: Please check your internet connection.");
+      } else {
+        // Something happened in setting up the request
+        setError("An unexpected error occurred.");
+      }
     } finally {
-      setLoading(false);
+      setLoading(false); // Always stop loading at the end
     }
-  }, []);
+  }, []); // Add dependencies as needed
 
   useEffect(() => {
     fetchUsers();
@@ -127,7 +88,7 @@ const MessageTab = () => {
       }
 
       const filtered = users.filter((user) =>
-        user.username.toLowerCase().includes(text.toLowerCase())
+        user.about.username.toLowerCase().includes(text.toLowerCase())
       );
       setFilteredUsers(filtered);
     },
@@ -209,7 +170,7 @@ const MessageTab = () => {
           <FlatList
             data={filteredUsers}
             renderItem={({ item }) => <ConversationItem item={item} />}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.userId}
             refreshing={refreshing}
             onRefresh={onRefresh}
             ListEmptyComponent={

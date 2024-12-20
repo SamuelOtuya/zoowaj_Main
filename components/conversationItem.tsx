@@ -9,7 +9,7 @@ interface ConversationItemProps {
 
 export const ConversationItem: React.FC<ConversationItemProps> = ({ item }) => {
   const router = useRouter();
-  const defaultAvatarPath = require("../../../assets/images/profile.png");
+  const defaultAvatarPath = require("../assets/images/profile.png");
 
   return (
     <TouchableOpacity

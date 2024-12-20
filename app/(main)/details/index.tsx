@@ -11,13 +11,16 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { UserProfileData } from "@/constants/types";
 import { calculateAge } from "@/utils/calculate";
+import { UserProfile } from "@/constants/models/userProfile.model";
 
 const ProfileDetailsScreen = () => {
   const params = useLocalSearchParams();
   const router = useRouter();
 
   // Parse profile data
-  const profile: UserProfileData = JSON.parse(params.profile as string);
+  const profile: UserProfileData = UserProfile.fromJSON(
+    JSON.parse(params.profile as string)
+  );
 
   // Check if profile data is valid
   if (!profile || !profile.about) {

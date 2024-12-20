@@ -84,7 +84,7 @@ export default function Auth() {
   return (
     <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={styles.scrollview}
+        contentContainerStyle={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         <TextInput
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 50,
   },
-  scrollview: {
+  scrollView: {
     paddingBottom: 30,
     backgroundColor: "#D9D9D9",
     padding: 10,
