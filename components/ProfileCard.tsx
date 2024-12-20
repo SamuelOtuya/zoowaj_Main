@@ -54,7 +54,9 @@ const ProfileCard = ({
           <View style={styles.textContainer}>
             <Text style={styles.nameText}>
               {profile.about.username}
-              {profile.about.birthDate ? `, ${calculateAge(profile.about.birthDate)}` : ""}
+              {profile.about.birthDate
+                ? `, ${calculateAge(profile.about.birthDate)}`
+                : ""}
             </Text>
             <Text style={styles.locationText}>
               {profile.about.maritalStatus}
@@ -65,6 +67,21 @@ const ProfileCard = ({
                   {tag}
                 </Text>
               ))}
+              {profile.languageAndEthnicity.languages.map((tag, index) => (
+                <Text key={index} style={styles.tagText}>
+                  {tag}
+                </Text>
+              ))}
+              {
+                <Text style={styles.tagText}>
+                  {profile.about.maritalStatus}
+                </Text>
+              }
+              {
+                <Text style={styles.tagText}>
+                  {profile.religiosity.muslimSect}
+                </Text>
+              }
             </View>
           </View>
         </View>

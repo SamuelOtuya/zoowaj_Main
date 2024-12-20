@@ -121,7 +121,7 @@ const HomeScreen = () => {
     );
   }
 
-  if (error) {
+  if (error && !loading && !profiles) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>

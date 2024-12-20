@@ -1,30 +1,40 @@
 import React from "react";
-import { Redirect, Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Image, TouchableOpacity, View } from "react-native";
 
-// Import PNG images
-import marriageIcon from "../../../assets/images/homeicon.png";
-import matchesIcon from "../../../assets/images/matches.png";
-import messageIcon from "../../../assets/images/message.png";
-import profileIcon from "../../../assets/images/profile.png";
-
-import notificationIcon from "../../../assets/images/notificationicon.png";
-import filterIcon from "../../../assets/images/filtericon.png";
-// import { useAuth } from '../../providers/AuthProvider';
+// Define icon sources using require
+const marriageIcon = require("../../../assets/images/homeicon.png");
+const matchesIcon = require("../../../assets/images/matches.png");
+const messageIcon = require("../../../assets/images/message.png");
+const profileIcon = require("../../../assets/images/profile.png");
+const notificationIcon = require("../../../assets/images/notificationicon.png");
+const filterIcon = require("../../../assets/images/filtericon.png");
 
 const _layout = () => {
   const router = useRouter();
+
+  // Function to render tab bar icons
+  const renderTabBarIcon = (icon: any) => ({ color, focused }) => (
+    <Image
+      source={icon}
+      style={{
+        width: 24,
+        height: 24,
+        tintColor: focused ? "#43CEBA" : "black",
+      }}
+    />
+  );
 
   return (
     <Tabs
       screenOptions={{
         tabBarStyle: {
-          height: 60, // Increase the height of the tab bar
-          paddingBottom: 10, // Add padding at the bottom
-          paddingTop: 10, // Add padding at the top
+          height: 60,
+          paddingBottom: 10,
+          paddingTop: 10,
         },
-        tabBarActiveTintColor: "#43CEBA", // Color for active tab
-        tabBarInactiveTintColor: "black", // Color for inactive tab
+        tabBarActiveTintColor: "#43CEBA",
+        tabBarInactiveTintColor: "black",
         headerShown: false,
       }}
     >
@@ -33,22 +43,10 @@ const _layout = () => {
         options={{
           headerTitle: "Discover",
           headerShadowVisible: false,
-          tabBarIcon: ({ color, focused }) => (
-            <Image
-              source={marriageIcon}
-              style={{
-                width: 24,
-                height: 24,
-                objectFit: "contain",
-                tintColor: focused ? "#43CEBA" : "black",
-              }}
-            />
-          ),
+          tabBarIcon: renderTabBarIcon(marriageIcon),
           headerRight: () => (
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <TouchableOpacity
-                onPress={() => router.push("/(Screens)/notificationscreen")}
-              >
+              <TouchableOpacity onPress={() => router.push("/")}>
                 <Image
                   source={notificationIcon}
                   style={{ width: 38, height: 38, marginRight: 10 }}
@@ -67,55 +65,22 @@ const _layout = () => {
       <Tabs.Screen
         name="matches"
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <Image
-              source={matchesIcon}
-              style={{
-                width: 24,
-                height: 24,
-                tintColor: focused ? "#43CEBA" : "black",
-              }}
-            />
-          ),
+          tabBarIcon: renderTabBarIcon(matchesIcon),
         }}
       />
       <Tabs.Screen
         name="message"
         options={{
-          tabBarIcon: ({ color, focused }) => (
-            <Image
-              source={messageIcon}
-              style={{
-                width: 24,
-                height: 24,
-                tintColor: focused ? "#43CEBA" : "black",
-              }}
-            />
-          ),
+          tabBarIcon: renderTabBarIcon(messageIcon),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           headerShown: false,
-          tabBarIcon: ({ color, focused }) => (
-            <Image
-              source={profileIcon}
-              style={{
-                width: 24,
-                height: 24,
-                tintColor: focused ? "#43CEBA" : "black",
-              }}
-            />
-          ),
+          tabBarIcon: renderTabBarIcon(profileIcon),
         }}
       />
-      <Tabs.Screen
-        name="profiledetail/[id]"
-        options={{ href: null, headerShown: false }}
-      />
-      {/* <Tabs.Screen name='profile/[id]' options={{ href: null, headerShown: false }} /> */}
-      {/* <Tabs.Screen name='[profile]/page' options={{ href: null, headerShown: false }} /> */}
     </Tabs>
   );
 };

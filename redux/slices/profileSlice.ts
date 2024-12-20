@@ -12,7 +12,7 @@ import { UserProfile } from "@/constants/models/userProfile.model";
 
 interface ProfileState {
   data: Record<string, any> | null;
-  authUser: UserProfileData | null; // Change type to UserProfileData
+  authUser: UserProfileData | null;
   appProfiles: UserProfileData[];
   error: string | null;
   loading: boolean;
@@ -30,7 +30,10 @@ const profileSlice = createSlice({
   name: "profile",
   initialState,
   reducers: {
-    updateProfileField(state, action) {
+    updateProfileField(
+      state,
+      action: PayloadAction<{ key: string; value: any }>
+    ) {
       if (state.data) {
         if (typeof action.payload.value === "object") {
           state.data[action.payload.key] = {
@@ -47,9 +50,9 @@ const profileSlice = createSlice({
       }
     },
 
-    setProfileData(state, action) {
+    setProfileData(state, action: PayloadAction<any>) {
       const userProfile = UserProfile.fromJSON(action.payload);
-      state.authUser = userProfile.toJSON(); // Store plain object instead of class instance
+      state.authUser = userProfile.toJSON();
       AsyncStorage.setItem("profileData", JSON.stringify(userProfile.toJSON()));
     },
 
@@ -63,15 +66,15 @@ const profileSlice = createSlice({
 
   extraReducers(builder) {
     builder
-      //Update Profile Details
+      // Update Profile Details
       .addCase(updateProfileDetailsService.pending, (state) => {
         state.loading = true;
-        state.error = null;
+        state.error = null; // Clear previous errors
       })
       .addCase(updateProfileDetailsService.fulfilled, (state, action) => {
         state.loading = false;
         const userProfile = UserProfile.fromJSON(action.payload.profile);
-        state.authUser = userProfile.toJSON(); // Store plain object instead of class instance
+        state.authUser = userProfile.toJSON();
         AsyncStorage.setItem(
           "profileData",
           JSON.stringify(userProfile.toJSON())
@@ -79,53 +82,68 @@ const profileSlice = createSlice({
       })
       .addCase(updateProfileDetailsService.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Profile Update Failed";
+        const errorMessage = action.error.message || "Profile Update Failed";
+        console.error(errorMessage); // Log the error for debugging
+        state.error = errorMessage;
       })
 
-      //Fetch Auth User Data from API
+      // Fetch Auth User Data from API
       .addCase(fetchAuthenticatedUserData.pending, (state) => {
         state.loading = true;
+        state.error = null; // Clear previous errors
       })
       .addCase(fetchAuthenticatedUserData.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload) {
+        if (action.payload && action.payload.profile) {
+          // Ensure profile exists
           const userProfile = UserProfile.fromJSON(action.payload.profile);
-          state.authUser = userProfile.toJSON(); // Store plain object instead of class instance
+          state.authUser = userProfile.toJSON();
           AsyncStorage.setItem(
             "profileData",
             JSON.stringify(userProfile.toJSON())
           );
         } else {
+          const errorMsg = "User Data Unavailable";
+          console.warn(errorMsg); // Log warning for missing data
           state.authUser = null;
-          state.error = "User Data Unavailable";
+          state.error = errorMsg;
         }
       })
       .addCase(fetchAuthenticatedUserData.rejected, (state, action) => {
         state.loading = false;
-        state.error =
+        const errorMessage =
           action.error.message || "Failed to fetch authenticated user data";
+        console.error(errorMessage); // Log the error for debugging
+        state.error = errorMessage;
       })
 
-      // In your reducer file where you handle actions
+      // Fetch User Profiles from API
       .addCase(fetchUserProfilesFromAPI.pending, (state) => {
         state.loading = true;
+        state.error = null; // Clear previous errors
       })
       .addCase(fetchUserProfilesFromAPI.fulfilled, (state, action) => {
         state.loading = false;
 
-        if (action.payload && action.payload.length > 0) {
+        if (action.payload && Array.isArray(action.payload)) {
+          // Ensure payload is an array
           state.appProfiles = action.payload.map((profile) => {
             const userProfile = UserProfile.fromJSON(profile);
             return userProfile.toJSON();
-          }); // Convert each UserProfile instance back to JSON if needed
+          });
         } else {
+          const errorMsg = "No profiles available";
+          console.warn(errorMsg); // Log warning for empty profiles
           state.appProfiles = [];
-          state.error = "User Data Unavailable";
+          state.error = errorMsg;
         }
       })
       .addCase(fetchUserProfilesFromAPI.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || "Failed to fetch User profiles";
+        const errorMessage =
+          action.error.message || "Failed to fetch User profiles";
+        console.error(errorMessage); // Log the error for debugging
+        state.error = errorMessage;
       });
   },
 });

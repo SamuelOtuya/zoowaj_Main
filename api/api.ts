@@ -1,12 +1,14 @@
 import axios from "axios";
 
-export const Url1 = "https://capital-obviously-terrier.ngrok-free.app/api/v1";
-export const Url2 = "https://social-smart-raven.ngrok-free.app/api/v1";
+export const Url1 = "https://capital-obviously-terrier.ngrok-free.app";
+export const Url2 = "https://social-smart-raven.ngrok-free.app";
 
 export const baseURL = Url1;
+const version = "api/v1";
+const assoc = `${baseURL}/${version}`;
 
 const API = axios.create({
-  baseURL: baseURL,
+  baseURL: assoc,
 });
 
 // Function to set the authorization token

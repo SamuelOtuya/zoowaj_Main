@@ -1,10 +1,9 @@
 import io, { Socket } from "socket.io-client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
-  FlatList,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -14,21 +13,21 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
+import { GiftedChat, IMessage } from "react-native-gifted-chat";
 import { messageData } from "@/constants/types";
+import { baseURL } from "@/api/api";
 
 const ChatScreen: React.FC = () => {
   const params = useLocalSearchParams();
-  const [texts, setTexts] = useState<messageData[]>([]);
+  const [texts, setTexts] = useState<IMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const flatListRef = useRef<FlatList<messageData>>(null);
 
   const recipientId = params.recipientId as string;
   const recipientName = params.recipientName as string;
   const recipientPhoto = params.recipientPhoto as string;
 
-  // Initialize socket with token
   const initializeSocket = async () => {
     try {
       const token = await AsyncStorage.getItem("bearerToken");
@@ -36,12 +35,10 @@ const ChatScreen: React.FC = () => {
         throw new Error("Token not found");
       }
 
-      // Connect to socket with token in query parameters
-      const newSocket = io("https://capital-obviously-terrier.ngrok-free.app", {
+      const newSocket = io(baseURL, {
         query: { token },
       });
 
-      // Log connection events
       newSocket.on("connect", () => {
         console.log("Socket connected:", newSocket.id);
       });
@@ -54,15 +51,32 @@ const ChatScreen: React.FC = () => {
         console.log("Socket disconnected:", reason);
       });
 
-      // Listen for incoming messages
-      newSocket.on("load chat", (texts: messageData[]) => {
-        setTexts(texts);
-        setLoading(false); // Mark loading as complete
+      // Handle 'load chat' messages
+      newSocket.on("load chat", (texts: messageData[] | null) => {
+        if (!texts || texts.length === 0) {
+          console.log("No messages found, initializing empty chat.");
+          setTexts([]);
+        } else {
+          const formattedMessages = texts.map((text) => ({
+            _id: text.id,
+            text: text.text,
+            createdAt: new Date(text.createdAt),
+            user: {
+              _id:
+                text.senderId === "your-user-id" ? "your-user-id" : recipientId,
+              name: text.senderId === "your-user-id" ? "You" : recipientName,
+              avatar: recipientPhoto,
+            },
+          }));
+          setTexts(formattedMessages);
+        }
+        setLoading(false);
       });
 
       setSocket(newSocket);
     } catch (error) {
       console.error("Error initializing socket:", error);
+      setLoading(false);
     }
   };
 
@@ -71,49 +85,23 @@ const ChatScreen: React.FC = () => {
 
     return () => {
       if (socket) {
-        socket.disconnect(); // Clean up on unmount
+        socket.disconnect();
       }
     };
   }, [recipientId]);
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !socket) return;
+  const onSend = (newMessages: IMessage[]) => {
+    if (!socket || !newMessages.length) return;
 
     try {
-      socket.emit("send text", { recipientId, message: newMessage }); // Send the message
-      setNewMessage(""); // Clear input after sending
+      socket.emit("send text", { recipientId, message: newMessages[0].text });
+      setTexts((previousMessages) =>
+        GiftedChat.append(previousMessages, newMessages)
+      );
     } catch (error) {
       console.error("Error sending message:", error);
       alert("Failed to send message. Please try again.");
     }
-  };
-
-  const renderMessage = ({ item }: { item: messageData }) => {
-    const isMyMessage = item.senderId === "your-user-id"; // Replace with actual user ID comparison
-
-    return (
-      <View
-        style={[
-          styles.messageContainer,
-          isMyMessage ? styles.myMessage : styles.theirMessage,
-        ]}
-      >
-        <Text style={[styles.messageText, !isMyMessage && { color: "#000" }]}>
-          {item.text}
-        </Text>
-        <Text
-          style={[
-            styles.timestamp,
-            !isMyMessage && { color: "rgba(0, 0, 0, 0.5)" },
-          ]}
-        >
-          {new Date(item.createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-      </View>
-    );
   };
 
   if (loading) {
@@ -135,36 +123,37 @@ const ChatScreen: React.FC = () => {
         <Text style={styles.headerText}>{recipientName}</Text>
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={texts}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id.toString()} // Ensure this is a string
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-        inverted={false}
+      <GiftedChat
+        messages={texts}
+        onSend={(messages) => onSend(messages)}
+        user={{
+          _id: "your-user-id",
+        }}
+        renderInputToolbar={(props) => (
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type a message..."
+              onChangeText={(text) => setNewMessage(text)}
+              value={newMessage}
+              multiline
+              maxLength={1000}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                !newMessage.trim() && styles.sendButtonDisabled,
+              ]}
+              onPress={() =>
+                onSend([{ text: newMessage, user: { _id: "your-user-id" } }])
+              }
+              disabled={!newMessage.trim()}
+            >
+              <Text style={styles.sendButtonText}>Send</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       />
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={newMessage}
-          onChangeText={setNewMessage}
-          placeholder="Type a message..."
-          multiline
-          maxLength={1000}
-        />
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            !newMessage.trim() && styles.sendButtonDisabled,
-          ]}
-          onPress={sendMessage}
-          disabled={!newMessage.trim()}
-        >
-          <Text style={styles.sendButtonText}>Send</Text>
-        </TouchableOpacity>
-      </View>
     </KeyboardAvoidingView>
   );
 };
