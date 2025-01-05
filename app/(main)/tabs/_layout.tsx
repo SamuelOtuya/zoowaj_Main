@@ -1,40 +1,28 @@
 import React from "react";
 import { Tabs, useRouter } from "expo-router";
-import { Image, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, StyleSheet } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
 
-// Define icon sources using require
-const marriageIcon = require("../../../assets/images/homeicon.png");
-const matchesIcon = require("../../../assets/images/matches.png");
-const messageIcon = require("../../../assets/images/message.png");
-const profileIcon = require("../../../assets/images/profile.png");
-const notificationIcon = require("../../../assets/images/notificationicon.png");
-const filterIcon = require("../../../assets/images/filtericon.png");
-
-const _layout = () => {
+const TabLayout = () => {
   const router = useRouter();
 
-  // Function to render tab bar icons
-  const renderTabBarIcon = (icon: any) => ({ color, focused }) => (
-    <Image
-      source={icon}
-      style={{
-        width: 24,
-        height: 24,
-        tintColor: focused ? "#43CEBA" : "black",
-      }}
-    />
+  const renderTabBarIcon = (iconName: any) => ({ focused }) => (
+    <View style={styles.iconContainer}>
+      <Ionicons 
+        name={iconName} 
+        size={24} 
+        color={focused ? "#43CEBA" : "#AEAEAE"}
+      />
+      {focused && <View style={styles.activeIndicator} />}
+    </View>
   );
 
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: {
-          height: 60,
-          paddingBottom: 10,
-          paddingTop: 10,
-        },
+        tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: "#43CEBA",
-        tabBarInactiveTintColor: "black",
+        tabBarInactiveTintColor: "#AEAEAE",
         headerShown: false,
       }}
     >
@@ -43,20 +31,14 @@ const _layout = () => {
         options={{
           headerTitle: "Discover",
           headerShadowVisible: false,
-          tabBarIcon: renderTabBarIcon(marriageIcon),
+          tabBarIcon: renderTabBarIcon("home-outline"),
           headerRight: () => (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={styles.headerRight}>
               <TouchableOpacity onPress={() => router.push("/")}>
-                <Image
-                  source={notificationIcon}
-                  style={{ width: 38, height: 38, marginRight: 10 }}
-                />
+                <Ionicons name="notifications-outline" size={24} color="#43CEBA" />
               </TouchableOpacity>
               <TouchableOpacity>
-                <Image
-                  source={filterIcon}
-                  style={{ width: 38, height: 38, marginRight: 15 }}
-                />
+                <Ionicons name="filter-outline" size={24} color="#43CEBA" />
               </TouchableOpacity>
             </View>
           ),
@@ -65,24 +47,55 @@ const _layout = () => {
       <Tabs.Screen
         name="matches"
         options={{
-          tabBarIcon: renderTabBarIcon(matchesIcon),
+          tabBarIcon: renderTabBarIcon("heart-outline"),
         }}
       />
       <Tabs.Screen
         name="message"
         options={{
-          tabBarIcon: renderTabBarIcon(messageIcon),
+          tabBarIcon: renderTabBarIcon("chatbubble-outline"),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           headerShown: false,
-          tabBarIcon: renderTabBarIcon(profileIcon),
+          tabBarIcon: renderTabBarIcon("person-outline"),
         }}
       />
     </Tabs>
   );
 };
 
-export default _layout;
+const styles = StyleSheet.create({
+  tabBar: {
+    height: 65,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#F5F5F5",
+    backgroundColor: "white",
+  },
+  iconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 45,
+    width: 45,
+  },
+  activeIndicator: {
+    position: "absolute",
+    bottom: -8,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#43CEBA",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 15,
+    gap: 15,
+  },
+});
+
+export default TabLayout;

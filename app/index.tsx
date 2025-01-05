@@ -50,7 +50,7 @@ const SplashScreen = () => {
   // Initialize app on startup
   useEffect(() => {
     const initializeApp = async () => {
-      // await resetAppData();
+      await resetAppData();
       await fetchData();
     };
     initializeApp();

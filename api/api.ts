@@ -1,9 +1,10 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 export const Url1 = "https://capital-obviously-terrier.ngrok-free.app";
 export const Url2 = "https://social-smart-raven.ngrok-free.app";
 
-export const baseURL = Url1;
+export const baseURL = Url2;
 const version = "api/v1";
 const assoc = `${baseURL}/${version}`;
 
@@ -21,6 +22,20 @@ export const setAuthToken = (token: string) => {
     delete API.defaults.headers.common["Authorization"];
   }
 };
+
+//request interceptor to automatically add bearer token
+API.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem('bearerToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // API.interceptors.request.use((config) => {
 //   console.log("\n");

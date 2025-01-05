@@ -1,10 +1,9 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View, SafeAreaView, FlatList } from 'react-native'
-import React from 'react'
+import { Image, StyleSheet, Text, TouchableOpacity, View, SafeAreaView, FlatList, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect } from 'react'
 import { Stack, useRouter } from 'expo-router'
 import backgreenarrow from "../../../assets/images/backgreenarrow.png"
 import filterGreen from "../../../assets/images/filtergreen.png"
-import { Ionicons } from '@expo/vector-icons'
-// import backgreenarrow from "../../../assets/images/backgreenarrow.png"
+import axios from 'axios'
 
 export const Customback = () => {
   const router = useRouter()
@@ -17,10 +16,49 @@ export const Customback = () => {
 
 const Matches = () => {
   const tabs = ['Liked you', 'Visited you', 'Favourited', 'Liked'];
-  const matches = [
-    { id: '1', name: 'Clyra Monica', age: 21, location: 'Thane, Czech Republic' },
-    { id: '2', name: 'Maria Icabes', age: 22, location: 'Porto, Philippines' },
-  ];
+  const [activeTab, setActiveTab] = useState(0);
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const API_BASE_URL = 'YOUR_API_BASE_URL';
+
+  const fetchMatches = async (type) => {
+    setLoading(true);
+    setError(null);
+    try {
+      let endpoint;
+      switch(type) {
+        case 0: // Liked you
+          endpoint = `${API_BASE_URL}/api/matches/liked-by`;
+          break;
+        case 2: // Favourited
+          endpoint = `${API_BASE_URL}/api/matches/favourited-by`;
+          break;
+        default:
+          setMatches([]);
+          setLoading(false);
+          return;
+      }
+
+      const response = await axios.get(endpoint, {
+        headers: {
+          'Authorization': 'Bearer YOUR_AUTH_TOKEN'
+        }
+      });
+
+      setMatches(response.data);
+    } catch (err) {
+      setError('Failed to fetch matches');
+      console.error('Error fetching matches:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMatches(activeTab);
+  }, [activeTab]);
 
   const renderMatchItem = ({ item }) => (
     <View style={styles.matchCard}>
@@ -46,26 +84,36 @@ const Matches = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.tabContainer}>
           {tabs.map((tab, index) => (
-            <TouchableOpacity key={index} style={styles.tab}>
-              <Text style={[styles.tabText, index === 0 && styles.activeTabText]}>{tab}</Text>
-              {index === 0 && <View style={styles.activeTabIndicator} />}
+            <TouchableOpacity 
+              key={index} 
+              style={styles.tab}
+              onPress={() => setActiveTab(index)}
+            >
+              <Text style={[styles.tabText, index === activeTab && styles.activeTabText]}>{tab}</Text>
+              {index === activeTab && <View style={styles.activeTabIndicator} />}
             </TouchableOpacity>
           ))}
         </View>
-        <Text style={styles.subHeaderText}>Liked you</Text>
-        <FlatList
-          data={matches}
-          renderItem={renderMatchItem}
-          keyExtractor={item => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.matchList}
-        />
-        {/* <View style={styles.bottomNav}>
-          <Ionicons name="chatbubble-outline" size={24} color="gray" />
-          <Ionicons name="people" size={24} color="#20B2AA" />
-          <Ionicons name="mail-outline" size={24} color="gray" />
-          <Ionicons name="person-outline" size={24} color="gray" />
-        </View> */}
+        
+        <Text style={styles.subHeaderText}>{tabs[activeTab]}</Text>
+        
+        {loading ? (
+          <View style={styles.centerContent}>
+            <ActivityIndicator size="large" color="#20B2AA" />
+          </View>
+        ) : error ? (
+          <View style={styles.centerContent}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={matches}
+            renderItem={renderMatchItem}
+            keyExtractor={item => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.matchList}
+          />
+        )}
       </SafeAreaView>
     </>
   )
@@ -139,4 +187,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
     paddingVertical: 12,
   },
-})
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+  }
+});

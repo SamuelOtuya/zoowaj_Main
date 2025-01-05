@@ -3,6 +3,7 @@ export interface User {
   name: string;
   avatar?: string;
   lastSeen?: Date;
+  
 }
 
 export interface ChatRoom {
@@ -20,6 +21,26 @@ export interface Message {
   text: string;
   timestamp: Date;
   status: "sent" | "delivered" | "read";
+}
+
+
+export interface UserData {
+  id: string;
+  email: string;
+  // ... add other user properties
+}
+
+export interface AuthResponse {
+  token: string;
+  user: UserData;
+}
+
+export interface AuthState {
+  user: UserData | null;
+  token: string | null;
+  isLoading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
 }
 
 export type RootStackParamList = {

@@ -3,115 +3,186 @@ import {
   StyleSheet,
   View,
   FlatList,
-  TouchableOpacity,
   ActivityIndicator,
   Text,
   RefreshControl,
 } from "react-native";
 import ProfileCard from "../../../components/ProfileCard";
 import API from "@/api/api";
-import {
-  fetchAuthenticatedUserData,
-  fetchUserProfilesFromAPI,
-} from "@/redux/services/profileService";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
-import { UserProfileData } from "@/constants/types";
+import { useAppSelector } from "@/redux/hooks/redux-hooks";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+interface UserProfileData {
+  _id: string;
+  userId: string;
+  profileId: string;
+  likes: string[];
+  favorites: string[];
+  name: string;
+  age: number;
+  location: string;
+  images?: string[];
+  about?: string;
+  profilePhoto: {
+    url: string;
+  };
+  about: {
+    username: string;
+    birthDate: string;
+    maritalStatus: string;
+  };
+  interests: string[];
+  languageAndEthnicity: {
+    languages: string[];
+  };
+  religiosity: {
+    muslimSect: string;
+  };
+}
 
 const HomeScreen = () => {
   const [profiles, setProfiles] = useState<UserProfileData[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [userId, setUserId] = useState<string>("");
-  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(false);
 
   const reject = require("../../../assets/images/reject.png");
   const match = require("../../../assets/images/match.png");
   const stared = require("../../../assets/images/stared.png");
 
-  const { appProfiles, loading, error } = useAppSelector(
-    (state) => state.profile
-  );
-  const { user } = useAppSelector((state) => state.auth);
+  const { authUser } = useAppSelector((state) => state.profile);
 
-  // Update profiles whenever appProfiles changes
-
-  const fetchUserData = async () => {
-    try {
-      await dispatch(fetchAuthenticatedUserData());
-    } catch (err) {
-      console.error("Error fetching user data:", err);
+  const getToken = async () => {
+    const token = await AsyncStorage.getItem("bearerToken");
+    if (!token) {
+      console.error("Authentication token not found");
+      return null;
     }
+    return token;
   };
 
   const fetchUserProfiles = async () => {
-    setRefreshing(true);
+    setLoading(true);
     try {
-      await dispatch(fetchUserProfilesFromAPI());
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await API.get("/user/profiles");
+      setProfiles(response.data);
     } catch (err) {
-      console.error("Error fetching user profiles:", err);
+      console.error("Fetch Error:", err);
     } finally {
-      setRefreshing(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUserData();
     fetchUserProfiles();
-    setProfiles(appProfiles);
-    setUserId(user?.id);
   }, []);
 
-  const handleRefresh = () => {
-    fetchUserProfiles();
+  const updateProfileField = (profileId: string, field: string, value: any) => {
+    setProfiles((prev) =>
+      prev.map((profile) =>
+        profile._id === profileId
+          ? {
+              ...profile,
+              [field]: value,
+            }
+          : profile
+      )
+    );
   };
 
-  const handleLike = async (profileId: string) => {
+  const handleLike = async (profileId) => {
     try {
-      await API.post(`/users/like/${profileId}`);
-      setProfiles((prevProfiles) =>
-        prevProfiles.map((profile) =>
-          profile.userId === profileId
-            ? { ...profile, likes: [...(profile.likes || []), userId] }
-            : profile
-        )
-      );
+      if (!authUser?.userId) return;
+      const token = await AsyncStorage.getItem("bearerToken");
+      if (!token) return;
+  
+      const response = await API.post(`/user/profile/like`, {
+        userId: authUser.userId,
+        profileId,
+      });
+  
+      if (response.data) {
+        setProfiles((prevProfiles) =>
+          prevProfiles.map((profile) =>
+            profile._id === profileId
+              ? {
+                  ...profile,
+                  likes: profile.likes.includes(authUser.userId)
+                    ? profile.likes.filter((id) => id !== authUser.userId)
+                    : [...profile.likes, authUser.userId],
+                }
+              : profile
+          )
+        );
+      }
     } catch (err) {
-      console.error("Error liking profile:", err);
-      alert("Failed to like profile. Please try again.");
+      console.error("Like Error:", err);
     }
   };
-
-  const handleFavorite = async (profileId: string) => {
+  
+  const handleFavorite = async (profileId) => {
     try {
-      await API.post(`/users/favorite/${profileId}`);
-      setProfiles((prevProfiles) =>
-        prevProfiles.map((profile) =>
-          profile.userId === profileId
-            ? {
-                ...profile,
-                favorites: profile.favorites?.includes(userId)
-                  ? profile.favorites.filter((id) => id !== userId)
-                  : [...(profile.favorites || []), userId],
-              }
-            : profile
-        )
-      );
+      if (!authUser?.userId) return;
+      const token = await AsyncStorage.getItem("bearerToken");
+      if (!token) return;
+  
+      const response = await API.post(`/user/profile/favorite`, {
+        userId: authUser.userId,
+        profileId,
+      });
+  
+      if (response.data) {
+        setProfiles((prevProfiles) =>
+          prevProfiles.map((profile) =>
+            profile._id === profileId
+              ? {
+                  ...profile,
+                  favorites: profile.favorites.includes(authUser.userId)
+                    ? profile.favorites.filter((id) => id !== authUser.userId)
+                    : [...profile.favorites, authUser.userId],
+                }
+              : profile
+          )
+        );
+      }
     } catch (err) {
-      console.error("Error toggling favorite:", err);
-      alert("Failed to update favorite status. Please try again.");
+      console.error("Favorite Error:", err);
     }
   };
+  
 
   const handleReject = async (profileId: string) => {
     try {
-      await API.post(`/users/reject/${profileId}`);
-      setProfiles((prevProfiles) =>
-        prevProfiles.filter((profile) => profile.userId !== profileId)
-      );
+      if (!authUser?.userId) return;
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await API.post(`/user/profile/reject`, {
+        userId: authUser.userId,
+        profileId,
+      });
+
+      if (response.data) {
+        setProfiles((prev) => prev.filter((profile) => profile._id !== profileId));
+      }
     } catch (err) {
-      console.error("Error rejecting profile:", err);
-      alert("Failed to reject profile. Please try again.");
+      console.error("Reject Error:", err);
     }
   };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchUserProfiles();
+    setRefreshing(false);
+  };
+
+  const checkIsLiked = (profile: UserProfileData) =>
+    profile.likes?.includes(authUser?.userId || "");
+
+  const checkIsFavorited = (profile: UserProfileData) =>
+    profile.favorites?.includes(authUser?.userId || "");
 
   if (loading && !refreshing) {
     return (
@@ -121,38 +192,22 @@ const HomeScreen = () => {
     );
   }
 
-  if (error && !loading && !profiles) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={fetchUserProfiles}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <Text style={styles.countText}>Total Profiles: {profiles.length}</Text>
       <FlatList
         data={profiles}
-        keyExtractor={(item) => item.userId}
-        renderItem={({ item }: { item: UserProfileData }) => (
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => (
           <ProfileCard
             profile={item}
             originalProfile={item}
-            icons={{
-              reject,
-              match,
-              stared,
-            }}
-            onLike={() => handleLike(item.userId)}
-            onFavorite={() => handleFavorite(item.userId)}
-            onReject={() => handleReject(item.userId)}
+            icons={{ reject, match, stared }}
+            isLiked={checkIsLiked(item)}
+            isFavorited={checkIsFavorited(item)}
+            onLike={() => handleLike(item._id)}
+            onFavorite={() => handleFavorite(item._id)}
+            onReject={() => handleReject(item._id)}
           />
         )}
         contentContainerStyle={styles.contentContainer}
@@ -185,21 +240,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
-  },
-  errorText: {
-    color: "red",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  retryButton: {
-    backgroundColor: "#20B2AA",
-    padding: 10,
-    borderRadius: 5,
-  },
-  retryButtonText: {
-    color: "white",
-    fontWeight: "bold",
   },
   emptyContainer: {
     flex: 1,

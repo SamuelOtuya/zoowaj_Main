@@ -19,6 +19,8 @@ interface ProfileCardProps {
     match: any;
     stared: any;
   };
+  isLiked: boolean;
+  isFavorited: boolean;
   onLike: () => void;
   onFavorite: () => void;
   onReject: () => void;
@@ -28,6 +30,8 @@ const ProfileCard = ({
   profile,
   originalProfile,
   icons,
+  isLiked,
+  isFavorited,
   onLike,
   onFavorite,
   onReject,
@@ -90,10 +94,22 @@ const ProfileCard = ({
             <Image source={icons.reject} style={styles.icon} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={onLike}>
-            <Image source={icons.match} style={styles.icon} />
+            <Image
+              source={icons.match}
+              style={[
+                styles.icon,
+                { tintColor: isLiked ? "#FF0000" : "#CCCCCC" }, // Red for liked
+              ]}
+            />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={onFavorite}>
-            <Image source={icons.stared} style={styles.icon} />
+            <Image
+              source={icons.stared}
+              style={[
+                styles.icon,
+                { tintColor: isFavorited ? "#FFD700" : "#CCCCCC" }, // Gold for favorited
+              ]}
+            />
           </TouchableOpacity>
         </View>
       </View>
