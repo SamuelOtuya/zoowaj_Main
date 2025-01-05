@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -6,11 +6,32 @@ import {
   ActivityIndicator,
   Text,
   RefreshControl,
+  SafeAreaView,
+  StatusBar,
+  Platform,
 } from "react-native";
 import ProfileCard from "../../../components/ProfileCard";
 import API from "@/api/api";
 import { useAppSelector } from "@/redux/hooks/redux-hooks";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+interface About {
+  username: string;
+  birthDate: string;
+  maritalStatus: string;
+}
+
+interface ProfilePhoto {
+  url: string;
+}
+
+interface LanguageAndEthnicity {
+  languages: string[];
+}
+
+interface Religiosity {
+  muslimSect: string;
+}
 
 interface UserProfileData {
   _id: string;
@@ -22,51 +43,53 @@ interface UserProfileData {
   age: number;
   location: string;
   images?: string[];
-  about?: string;
-  profilePhoto: {
-    url: string;
-  };
-  about: {
-    username: string;
-    birthDate: string;
-    maritalStatus: string;
-  };
+  profilePhoto: ProfilePhoto;
+  about: About;
   interests: string[];
-  languageAndEthnicity: {
-    languages: string[];
-  };
-  religiosity: {
-    muslimSect: string;
-  };
+  languageAndEthnicity: LanguageAndEthnicity;
+  religiosity: Religiosity;
 }
 
-const HomeScreen = () => {
-  const [profiles, setProfiles] = useState<UserProfileData[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(false);
+interface IconAssets {
+  reject: number;
+  match: number;
+  stared: number;
+}
 
-  const reject = require("../../../assets/images/reject.png");
-  const match = require("../../../assets/images/match.png");
-  const stared = require("../../../assets/images/stared.png");
+const HomeScreen: React.FC = () => {
+  const [profiles, setProfiles] = useState<UserProfileData[]>([]);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const icons: IconAssets = {
+    reject: require("../../../assets/images/reject.png"),
+    match: require("../../../assets/images/match.png"),
+    stared: require("../../../assets/images/stared.png"),
+  };
 
   const { authUser } = useAppSelector((state) => state.profile);
 
-  const getToken = async () => {
-    const token = await AsyncStorage.getItem("bearerToken");
-    if (!token) {
-      console.error("Authentication token not found");
+  const getToken = async (): Promise<string | null> => {
+    try {
+      const token = await AsyncStorage.getItem("bearerToken");
+      if (!token) {
+        console.error("Authentication token not found");
+        return null;
+      }
+      return token;
+    } catch (error) {
+      console.error("Error getting token:", error);
       return null;
     }
-    return token;
   };
 
-  const fetchUserProfiles = async () => {
+  const fetchUserProfiles = async (): Promise<void> => {
     setLoading(true);
     try {
       const token = await getToken();
       if (!token) return;
 
-      const response = await API.get("/user/profiles");
+      const response = await API.get<UserProfileData[]>("/user/profiles");
       setProfiles(response.data);
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -79,30 +102,17 @@ const HomeScreen = () => {
     fetchUserProfiles();
   }, []);
 
-  const updateProfileField = (profileId: string, field: string, value: any) => {
-    setProfiles((prev) =>
-      prev.map((profile) =>
-        profile._id === profileId
-          ? {
-              ...profile,
-              [field]: value,
-            }
-          : profile
-      )
-    );
-  };
-
-  const handleLike = async (profileId) => {
+  const handleLike = async (profileId: string): Promise<void> => {
     try {
       if (!authUser?.userId) return;
-      const token = await AsyncStorage.getItem("bearerToken");
+      const token = await getToken();
       if (!token) return;
-  
+
       const response = await API.post(`/user/profile/like`, {
         userId: authUser.userId,
         profileId,
       });
-  
+
       if (response.data) {
         setProfiles((prevProfiles) =>
           prevProfiles.map((profile) =>
@@ -121,18 +131,18 @@ const HomeScreen = () => {
       console.error("Like Error:", err);
     }
   };
-  
-  const handleFavorite = async (profileId) => {
+
+  const handleFavorite = async (profileId: string): Promise<void> => {
     try {
       if (!authUser?.userId) return;
-      const token = await AsyncStorage.getItem("bearerToken");
+      const token = await getToken();
       if (!token) return;
-  
+
       const response = await API.post(`/user/profile/favorite`, {
         userId: authUser.userId,
         profileId,
       });
-  
+
       if (response.data) {
         setProfiles((prevProfiles) =>
           prevProfiles.map((profile) =>
@@ -151,9 +161,8 @@ const HomeScreen = () => {
       console.error("Favorite Error:", err);
     }
   };
-  
 
-  const handleReject = async (profileId: string) => {
+  const handleReject = async (profileId: string): Promise<void> => {
     try {
       if (!authUser?.userId) return;
       const token = await getToken();
@@ -172,16 +181,16 @@ const HomeScreen = () => {
     }
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async (): Promise<void> => {
     setRefreshing(true);
     await fetchUserProfiles();
     setRefreshing(false);
-  };
+  }, []);
 
-  const checkIsLiked = (profile: UserProfileData) =>
+  const checkIsLiked = (profile: UserProfileData): boolean =>
     profile.likes?.includes(authUser?.userId || "");
 
-  const checkIsFavorited = (profile: UserProfileData) =>
+  const checkIsFavorited = (profile: UserProfileData): boolean =>
     profile.favorites?.includes(authUser?.userId || "");
 
   if (loading && !refreshing) {
@@ -193,53 +202,87 @@ const HomeScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.countText}>Total Profiles: {profiles.length}</Text>
-      <FlatList
-        data={profiles}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <ProfileCard
-            profile={item}
-            originalProfile={item}
-            icons={{ reject, match, stared }}
-            isLiked={checkIsLiked(item)}
-            isFavorited={checkIsFavorited(item)}
-            onLike={() => handleLike(item._id)}
-            onFavorite={() => handleFavorite(item._id)}
-            onReject={() => handleReject(item._id)}
-          />
-        )}
-        contentContainerStyle={styles.contentContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={["#20B2AA"]}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No profiles available</Text>
-          </View>
-        }
-      />
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Discover</Text>
+          <Text style={styles.headerSubtitle}>
+             {profiles.length} profiles
+          </Text>
+        </View>
+        
+        <FlatList
+          data={profiles}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <ProfileCard
+              profile={item}
+              originalProfile={item}
+              icons={icons}
+              isLiked={checkIsLiked(item)}
+              isFavorited={checkIsFavorited(item)}
+              onLike={() => handleLike(item._id)}
+              onFavorite={() => handleFavorite(item._id)}
+              onReject={() => handleReject(item._id)}
+            />
+          )}
+          contentContainerStyle={styles.contentContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={["#20B2AA"]}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No profiles available</Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
+    backgroundColor: "#fff",
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+    backgroundColor: "#fff",
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
   },
   contentContainer: {
-    paddingHorizontal: 12,
-    paddingTop: 30,
+    paddingTop: 20,
   },
   centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fff",
   },
   emptyContainer: {
     flex: 1,
@@ -250,10 +293,6 @@ const styles = StyleSheet.create({
   emptyText: {
     color: "#666",
     fontSize: 16,
-  },
-  countText: {
-    padding: 10,
-    backgroundColor: "#f0f0f0",
     textAlign: "center",
   },
 });
