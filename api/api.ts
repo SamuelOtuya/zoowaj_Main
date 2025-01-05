@@ -3,8 +3,9 @@ import axios from "axios";
 
 export const Url1 = "https://capital-obviously-terrier.ngrok-free.app";
 export const Url2 = "https://social-smart-raven.ngrok-free.app";
+export const Url3 = "https://zoowaj-node.onrender.com";
 
-export const baseURL = Url1;
+export const baseURL = Url3;
 const version = "api/v1";
 const assoc = `${baseURL}/${version}`;
 

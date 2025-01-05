@@ -95,13 +95,13 @@ export default function Screen2() {
           style={[
             // styles.button,
             {
-              height: 40,
+              height: 50,
               borderRadius: 8,
               padding: 10,
               alignItems: "center",
               justifyContent: "center",
               backgroundColor:
-                selectedInterests.length === 0 ? "#ccc" : "#007BFF",
+                selectedInterests.length === 0 ? "#ccc" : "#20B2AA",
             },
           ]}
           onPress={handleSubmit}
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     backgroundColor: "lightgray", // Default color for unselected buttons
   },
   selectedButton: {
-    backgroundColor: "#4CAF50", // Green when selected
+    backgroundColor: "#20B2AA", // Green when selected
   },
   buttonText: {
     color: "white",

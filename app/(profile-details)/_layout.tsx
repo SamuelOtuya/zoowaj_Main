@@ -7,8 +7,7 @@ export default function ProfileDetailsLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name="step-1
-        "
+        name="step-1"
         options={{
           headerShadowVisible: false,
           headerTitleAlign: "center",
@@ -17,8 +16,7 @@ export default function ProfileDetailsLayout() {
         }}
       />
       <Stack.Screen
-        name="step-2
-        "
+        name="step-2"
         options={{
           headerShadowVisible: false,
           headerTitleAlign: "center",
@@ -68,6 +66,15 @@ export default function ProfileDetailsLayout() {
           headerShadowVisible: false,
           headerTitleAlign: "center",
           headerTitle: "Verify who you are",
+          headerLeft: () => <CustomBackButton />,
+        }}
+      />
+       <Stack.Screen
+        name="step-8"
+        options={{
+          headerShadowVisible: false,
+          headerTitleAlign: "center",
+          headerTitle: "Profile&Cover Photos",
           headerLeft: () => <CustomBackButton />,
         }}
       />

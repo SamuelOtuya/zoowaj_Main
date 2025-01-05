@@ -120,7 +120,7 @@ export default function Screen1() {
           onValueChange={(value) => setMaritalStatus(value)}
           items={[
             { label: "Single", value: "Single" },
-            { label: "Married", value: "Married" },
+            // { label: "Married", value: "Married" },
             { label: "Divorced", value: "Divorced" },
             { label: "Widowed", value: "Widowed" },
           ]}
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   button: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#20B2AA",
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",

@@ -180,11 +180,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   saveButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#20B2AA",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 10,
   },
   saveButtonText: {
     color: "#fff",

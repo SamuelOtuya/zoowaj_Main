@@ -21,6 +21,8 @@ interface ProfileMedia {
   coverPhotos: string[];
 }
 
+const MAX_COVER_PHOTOS = 6;
+
 const ProfileImagePicker: React.FC = () => {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [coverPhotos, setCoverPhotos] = useState<string[]>([]);
@@ -36,11 +38,11 @@ const ProfileImagePicker: React.FC = () => {
           setProfilePhoto(uri);
         }
       } else {
-        if (coverPhotos.length >= 6) {
-          throw new Error("Maximum 6 cover photos allowed");
+        if (coverPhotos.length >= MAX_COVER_PHOTOS) {
+          throw new Error(`Maximum ${MAX_COVER_PHOTOS} cover photos allowed`);
         }
         const uris = await ImagePickerService.pickMultipleImages(
-          6 - coverPhotos.length
+          MAX_COVER_PHOTOS - coverPhotos.length
         );
         if (uris.length > 0) {
           const updatedCoverPhotos = [...coverPhotos, ...uris];
@@ -74,15 +76,12 @@ const ProfileImagePicker: React.FC = () => {
         coverPhotos,
       };
 
-      // Validate data before dispatching
       if (!validateData(userProfileData)) {
         setError("Please provide valid profile data.");
         return;
       }
 
-      // Prepare and upload profile images
       const payload: FormData = await setupProfileImageData(userProfileData);
-
       const response = await dispatch(createProfileImagesService(payload));
 
       if (response.meta.requestStatus === "fulfilled") {
@@ -98,11 +97,34 @@ const ProfileImagePicker: React.FC = () => {
     }
   };
 
-  const renderCoverPhoto = ({ item }: { item: string }) => (
-    <View style={styles.coverPhotoItem}>
-      <Image source={{ uri: item }} style={styles.coverPhotoImage} />
-    </View>
-  );
+  const renderCoverPhotoItem = ({ item }: { item: string | null }) => {
+    if (item === null) {
+      // Render placeholder
+      return (
+        <TouchableOpacity 
+          style={[styles.coverPhotoItem, styles.placeholderContainer]}
+          onPress={() => pickImage("cover")}
+          disabled={isSubmitting}
+        >
+          <Icon name="add-photo-alternate" size={30} color="#999" />
+          <Text style={styles.placeholderText}>Add Photo</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    // Render actual photo
+    return (
+      <View style={styles.coverPhotoItem}>
+        <Image source={{ uri: item }} style={styles.coverPhotoImage} />
+      </View>
+    );
+  };
+
+  // Create array with actual photos and placeholders
+  const coverPhotoItems = [
+    ...coverPhotos,
+    ...Array(MAX_COVER_PHOTOS - coverPhotos.length).fill(null)
+  ];
 
   return (
     <View style={styles.container}>
@@ -122,31 +144,24 @@ const ProfileImagePicker: React.FC = () => {
                 style={[styles.image, styles.profileImage]}
               />
             ) : (
-              <Icon name="photo-camera" size={50} color="#fff" />
+              <>
+                <Icon name="photo-camera" size={50} color="#999" />
+                <Text style={styles.placeholderText}>Profile Photo</Text>
+              </>
             )}
           </View>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.subtitle}>Cover Photos (Up to 6)</Text>
+      <Text style={styles.subtitle}>Cover Photos (2-6 Required)</Text>
       <FlatList
-        data={coverPhotos}
+        data={coverPhotoItems}
         keyExtractor={(item, index) => index.toString()}
-        renderItem={renderCoverPhoto}
+        renderItem={renderCoverPhotoItem}
         horizontal
         contentContainerStyle={styles.coverPhotoList}
+        showsHorizontalScrollIndicator={false}
       />
-
-      <TouchableOpacity
-        onPress={() => pickImage("cover")}
-        style={[
-          styles.addCoverPhotoButton,
-          isSubmitting && styles.disabledButton,
-        ]}
-        disabled={isSubmitting}
-      >
-        <Icon name="add-photo-alternate" size={50} color="#fff" />
-      </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.saveButton, isSubmitting && styles.disabledButton]}
@@ -193,7 +208,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 75,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: "#f0f0f0",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderStyle: "dashed",
   },
   image: {
     width: "100%",
@@ -208,24 +226,31 @@ const styles = StyleSheet.create({
   },
   coverPhotoItem: {
     marginRight: 10,
+    width: 100,
+    height: 100,
+  },
+  placeholderContainer: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderStyle: "dashed",
+  },
+  placeholderText: {
+    color: "#999",
+    fontSize: 12,
+    marginTop: 5,
+    textAlign: "center",
   },
   coverPhotoImage: {
     width: 100,
     height: 100,
     borderRadius: 8,
   },
-  addCoverPhotoButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#333",
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignSelf: "center",
-    marginVertical: 20,
-  },
   saveButton: {
-    backgroundColor: "#FF5722",
+    backgroundColor: "#20B2AA",
     paddingVertical: 14,
     borderRadius: 25,
     alignItems: "center",
