@@ -59,8 +59,14 @@ export interface UserProfileData {
 
 export interface messageData {
   id: string;
-  senderId: string;
-  recipientId: string;
+  senderId: {
+    id: string;
+    email: string;
+  };
+  recipientId: {
+    id: string;
+    email: string;
+  };
   text: string;
   read: boolean;
   createdAt: Date | string; // Creation Date

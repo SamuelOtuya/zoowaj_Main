@@ -2,8 +2,14 @@ import { messageData } from "../types";
 
 export class Message implements messageData {
   id: string;
-  senderId: string;
-  recipientId: string;
+  senderId: {
+    id: string;
+    email: string;
+  };
+  recipientId: {
+    id: string;
+    email: string;
+  };
   text: string;
   read: boolean;
   createdAt: Date;
@@ -11,14 +17,20 @@ export class Message implements messageData {
 
   constructor(
     id: string,
-    senderId: string,
-    recipientId: string,
+    senderId: {
+      id: string;
+      email: string;
+    },
+    recipientId: {
+      id: string;
+      email: string;
+    },
     text: string,
     read: boolean,
     createdAt: Date | string,
     updatedAt: Date | string
   ) {
-    // Fallback to a generated ID if `id` is undefined
+    // Assign values to the fields
     this.id = id || `${Date.now()}-${Math.random()}`;
     this.senderId = senderId;
     this.recipientId = recipientId;
@@ -47,8 +59,14 @@ export class Message implements messageData {
   static fromJSON(data: any): Message {
     return new Message(
       data.id || data._id, // Handle both `id` and `_id` from raw data
-      data.userId, // Assuming `userId` maps to `senderId`
-      data.recipientId,
+      {
+        id: data.userId._id,
+        email: data.userId.email,
+      }, // Map `userId` to `senderId`
+      {
+        id: data.recipientId._id,
+        email: data.recipientId.email,
+      }, // Map `recipientId` object
       data.text,
       data.read,
       data.createdAt,

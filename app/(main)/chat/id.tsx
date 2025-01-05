@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { GiftedChat, IMessage } from "react-native-gifted-chat";
 import { messageData, UserProfileData } from "@/constants/types";
+import { useAppSelector } from "@/redux/hooks/redux-hooks";
 import { baseURL } from "@/api/api";
 import { UserProfile } from "@/constants/models/userProfile.model";
 import { Message } from "@/constants/models/message.model";
@@ -25,6 +26,8 @@ const ChatScreen: React.FC = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
+
+  const authUser = useAppSelector((state) => state.profile.authUser);
 
   const sneakyLink: UserProfileData = UserProfile.fromJSON(
     JSON.parse(params.profile as string)
@@ -79,19 +82,24 @@ const ChatScreen: React.FC = () => {
               return message;
             });
 
-            const formattedMessages: IMessage[] = data.map((text) => ({
-              _id: text.id.toString(),
-              text: text.text,
-              createdAt: new Date(text.createdAt), // Ensure createdAt is a Date object
-              user: {
-                _id:
-                  text.senderId === "your-user-id"
-                    ? "your-user-id"
-                    : recipientId, // Ensure recipientId is defined
-                name: text.senderId === "your-user-id" ? "You" : recipientName,
-                avatar: recipientPhoto, // Ensure recipientPhoto is defined
-              },
-            }));
+            const formattedMessages: IMessage[] = data.map(
+              (text: messageData) => ({
+                _id: text.id.toString(),
+                text: text.text,
+                createdAt: new Date(text.createdAt), // Ensure createdAt is a Date object
+                user: {
+                  _id:
+                    text.senderId.id === authUser!.userId
+                      ? authUser!.userId
+                      : recipientId, // Ensure recipientId is defined
+                  name:
+                    text.senderId.id === authUser!.userId
+                      ? "You"
+                      : recipientName,
+                  avatar: recipientPhoto, // Ensure recipientPhoto is defined
+                },
+              })
+            );
 
             console.log("Formatted messages:", formattedMessages); // Check formatted messages
 
@@ -159,7 +167,7 @@ const ChatScreen: React.FC = () => {
         messages={texts}
         onSend={(messages) => onSend(messages)}
         user={{
-          _id: "your-user-id",
+          _id: authUser!.userId,
         }}
         renderInputToolbar={(props) => (
           <View style={styles.inputContainer}>
@@ -181,7 +189,7 @@ const ChatScreen: React.FC = () => {
                   {
                     _id: `${Date.now()}`,
                     text: newMessage,
-                    user: { _id: "your-user-id" },
+                    user: { _id: authUser!.userId },
                     createdAt: Date.now(),
                   },
                 ])

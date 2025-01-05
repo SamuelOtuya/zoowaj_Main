@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks/redux-hooks";
 import { logout as logoutAction } from "@/redux/slices/authSlice";
+import { persister } from "@/redux/store";
 
 const ProfileScreen: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -35,10 +36,22 @@ const ProfileScreen: React.FC = () => {
     }
   }, [profileDetails]);
 
-  const handleLogout = async () => {
+  // Function to reset app data
+  const resetAppData = async () => {
+    console.log("Resetting app");
     try {
       await AsyncStorage.clear();
+      await persister.purge();
       dispatch(logoutAction());
+    } catch (error) {
+      console.error("Error during app data reset:", error);
+      throw error;
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await resetAppData();
       router.replace("/SignIn");
       Toast.show({
         type: "success",
