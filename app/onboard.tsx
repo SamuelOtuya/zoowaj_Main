@@ -29,7 +29,7 @@ const Signup = () => {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/(profile-details)/step-1")}
+          onPress={() => router.push("/SignIn")}
         >
           <Image source={appleIcon} style={styles.icon} />
           <Text style={styles.buttonText}>Continue with Apple</Text>
@@ -37,7 +37,7 @@ const Signup = () => {
 
         <TouchableOpacity
           style={[styles.button, styles.googleButton]}
-          onPress={() => router.push("/(main)/tabs/home")}
+          onPress={() => router.push("/SignUp")}
         >
           <Image source={googleIcon} style={styles.icon} />
           <Text style={styles.buttonText}>Continue with Google</Text>

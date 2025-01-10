@@ -1,9 +1,16 @@
 import {
-  Image, StyleSheet, Text, TouchableOpacity, View, FlatList,
-  TextInput, SafeAreaView, ActivityIndicator
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  FlatList,
+  TextInput,
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState, useCallback } from "react";
-import { Stack } from "expo-router";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import API from "@/api/api";
 
@@ -30,16 +37,18 @@ const MessageTab = () => {
     setError(null);
     try {
       const response = await API.get("/user/chats");
-      const transformedUsers: MessageUser[] = response.data.map((user: any) => ({
-        id: user.id,
-        username: user.username,
-        profilePicture: user.profilePicture,
-        fullName: user.fullName,
-        lastMessage: user.lastMessage,
-        lastMessageTime: user.lastMessageTime,
-        unreadCount: user.unreadCount,
-        isLastMessageFromMe: user.isLastMessageFromMe
-      }));
+      const transformedUsers: MessageUser[] = response.data.map(
+        (user: any) => ({
+          id: user.id,
+          username: user.username,
+          profilePicture: user.profilePicture,
+          fullName: user.fullName,
+          lastMessage: user.lastMessage,
+          lastMessageTime: user.lastMessageTime,
+          unreadCount: user.unreadCount,
+          isLastMessageFromMe: user.isLastMessageFromMe,
+        })
+      );
       setUsers(transformedUsers);
       setFilteredUsers(transformedUsers);
     } catch (err: any) {
@@ -53,29 +62,47 @@ const MessageTab = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleSearch = useCallback((text: string) => {
-    setSearchQuery(text);
-    const filtered = users.filter(user => 
-      user.username.toLowerCase().includes(text.toLowerCase()) ||
-      user.fullName.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredUsers(filtered);
-  }, [users]);
+  const handleSearch = useCallback(
+    (text: string) => {
+      setSearchQuery(text);
+      const filtered = users.filter(
+        (user) =>
+          user.username.toLowerCase().includes(text.toLowerCase()) ||
+          user.fullName.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    },
+    [users]
+  );
+
+  const handleMessagePress = async (profile: MessageUser) => {
+    router.push({
+      pathname: "/(main)/chat/chat",
+      params: {
+        recipientId: profile.id,
+        recipientName: `${profile.username}`,
+        recipientPhoto: profile.profilePicture,
+      },
+    });
+  };
 
   const renderItem = ({ item }: { item: MessageUser }) => (
-    <TouchableOpacity style={styles.conversationItem}>
+    <TouchableOpacity
+      style={styles.conversationItem}
+      onPress={() => handleMessagePress(item)}
+    >
       <View style={styles.avatarContainer}>
-        <Image 
+        <Image
           source={{ uri: item.profilePicture }}
           style={styles.avatar}
           defaultSource={require("../../../assets/images/default-avatar.png")}
         />
-        {item.unreadCount > 0 && (
-          <View style={styles.unreadDot} />
-        )}
+        {item.unreadCount > 0 && <View style={styles.unreadDot} />}
       </View>
       <View style={styles.conversationDetails}>
-        <Text style={styles.name} numberOfLines={1}>{item.fullName}</Text>
+        <Text style={styles.name} numberOfLines={1}>
+          {item.fullName}
+        </Text>
         <Text style={styles.message} numberOfLines={1}>
           {item.lastMessage}
         </Text>
@@ -83,8 +110,8 @@ const MessageTab = () => {
       <View style={styles.timeContainer}>
         <Text style={styles.time}>
           {new Date(item.lastMessageTime).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </Text>
       </View>
@@ -96,7 +123,12 @@ const MessageTab = () => {
       <View style={styles.content}>
         <Text style={styles.title}>Message</Text>
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={20}
+            color="#888"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search"
@@ -114,12 +146,16 @@ const MessageTab = () => {
             </TouchableOpacity>
           </View>
         ) : loading ? (
-          <ActivityIndicator style={styles.loading} size="large" color="#20B2AA" />
+          <ActivityIndicator
+            style={styles.loading}
+            size="large"
+            color="#20B2AA"
+          />
         ) : (
           <FlatList
             data={filteredUsers}
             renderItem={renderItem}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             refreshing={loading}
             onRefresh={fetchUsers}
             contentContainerStyle={styles.listContent}
@@ -131,7 +167,7 @@ const MessageTab = () => {
           />
         )}
       </View>
-{/* 
+      {/* 
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.tabItem}>
           <Ionicons name="home-outline" size={24} color="#888" />

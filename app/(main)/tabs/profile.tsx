@@ -52,6 +52,8 @@ const ProfileScreen: React.FC = () => {
   const handleLogout = async () => {
     try {
       await resetAppData();
+      setProfileImage(null);
+      setBannerImage(null);
       router.replace("/SignIn");
       Toast.show({
         type: "success",
